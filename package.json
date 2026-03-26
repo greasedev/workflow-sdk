@@ -38,6 +38,7 @@
     "zod": "^3.x"
   },
   "devDependencies": {
+    "@types/chrome": "^0.0.268",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   }
