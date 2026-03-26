@@ -81,7 +81,6 @@ export type UIMessageStreamEvent =
 // ============================================================================
 
 export interface AgentOptions {
-  llm?: LLMConfig
   browserContext?: BrowserContext
   signal?: AbortSignal
   stateful?: boolean
@@ -186,9 +185,11 @@ export interface ProgressEvent {
 // Workflow Context Types
 // ============================================================================
 
-export interface WorkflowContext<TApis = Record<string, unknown>> {
+export interface WorkflowContext {
+  /** Agent instance for browser automation */
   agent: Agent
-  apis: TApis
+  /** Task description for the workflow to accomplish */
+  task: string
 }
 
 // ============================================================================

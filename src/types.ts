@@ -103,7 +103,6 @@ export type UIMessageStreamEvent =
  * @internal Used by runtime - not needed in generated code
  */
 export interface AgentOptions {
-  llm?: LLMConfig
   /** Browser context for targeting specific windows/tabs and MCP servers */
   browserContext?: BrowserContext
   signal?: AbortSignal
@@ -300,11 +299,10 @@ import type { Agent } from './agent'
 
 /**
  * Workflow execution context passed to workflow execute function.
- * The apis property is injected by the runtime with the generated API methods.
  */
-export interface WorkflowContext<TApis = Record<string, unknown>> {
+export interface WorkflowContext {
   /** Agent instance for browser automation */
   agent: Agent
-  /** Generated API methods from workflow dependencies */
-  apis: TApis
+  /** Task description for the workflow to accomplish */
+  task: string
 }
