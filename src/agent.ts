@@ -3,6 +3,8 @@ import { WorkflowSDKError } from './errors'
 import { act } from './methods/act'
 import { call } from './methods/call'
 import { complete } from './methods/complete'
+import { sendImage } from './methods/send-image'
+import { sendText } from './methods/send-text'
 import { request } from './utils/request'
 import type {
   ActOptions,
@@ -13,6 +15,8 @@ import type {
   CallResult,
   CompleteOptions,
   CompleteResult,
+  SendImageResult,
+  SendTextResult,
 } from './types'
 
 /**
@@ -168,5 +172,40 @@ export class Agent implements AsyncDisposable, AgentContext {
    */
   call<T = unknown>(endpoint: string, options?: CallOptions): Promise<CallResult<T>> {
     return call<T>(this, endpoint, options)
+  }
+
+  /**
+   * Send a text message.
+   *
+   * @param chatId - The chat ID to send the message to
+   * @param title - The title of the message
+   * @param content - The content of the message
+   * @returns Promise resolving to `{ success: boolean }`
+   * @throws {SendTextError} When sending fails
+   *
+   * @example
+   * ```typescript
+   * await agent.sendText('chat-123', 'Title', 'Hello, how can I help you?')
+   * ```
+   */
+  sendText(chatId: string, title: string, content: string): Promise<SendTextResult> {
+    return sendText(this, chatId, title, content)
+  }
+
+  /**
+   * Send an image.
+   *
+   * @param chatId - The chat ID to send the image to
+   * @param base64Image - Base64 encoded image string
+   * @returns Promise resolving to `{ success: boolean }`
+   * @throws {SendImageError} When sending fails
+   *
+   * @example
+   * ```typescript
+   * await agent.sendImage('chat-123', 'data:image/png;base64,iVBORw0KGgo...')
+   * ```
+   */
+  sendImage(chatId: string, base64Image: string): Promise<SendImageResult> {
+    return sendImage(this, chatId, base64Image)
   }
 }

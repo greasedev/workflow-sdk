@@ -6,6 +6,8 @@ export {
   WorkflowSDKError,
 } from './errors'
 export { CallError } from './methods/call'
+export { SendTextError } from './methods/send-text'
+export { SendImageError } from './methods/send-image'
 export type {
   WorkflowRequestMessage,
   WorkflowResponse,
@@ -20,6 +22,8 @@ export type {
   CallResult,
   CompleteOptions,
   CompleteResult,
+  SendTextResult,
+  SendImageResult,
   Tab,
   ToolCall,
   UIMessageStreamEvent,

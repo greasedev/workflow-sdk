@@ -291,6 +291,22 @@ export interface CallResult<T = unknown> {
   status: number
 }
 
+/**
+ * Result returned by `sendText()`.
+ */
+export interface SendTextResult {
+  /** Whether the message was sent successfully */
+  success: boolean
+}
+
+/**
+ * Result returned by `sendImage()`.
+ */
+export interface SendImageResult {
+  /** Whether the image was sent successfully */
+  success: boolean
+}
+
 // ============================================================================
 // Workflow Context Types
 // ============================================================================
@@ -303,4 +319,6 @@ export interface WorkflowContext {
   agentOptions?: AgentOptions
   /** Task description for the workflow to accomplish */
   task: string
+  /** Chat ID for the current conversation */
+  chatId?: string
 }
