@@ -295,14 +295,12 @@ export interface CallResult<T = unknown> {
 // Workflow Context Types
 // ============================================================================
 
-import type { Agent } from './agent'
-
 /**
  * Workflow execution context passed to workflow execute function.
  */
 export interface WorkflowContext {
-  /** Agent instance for browser automation */
-  agent: Agent
+  /** Agent options for creating the agent instance */
+  agentOptions?: AgentOptions
   /** Task description for the workflow to accomplish */
   task: string
 }

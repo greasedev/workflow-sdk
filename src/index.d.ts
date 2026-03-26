@@ -186,8 +186,8 @@ export interface ProgressEvent {
 // ============================================================================
 
 export interface WorkflowContext {
-  /** Agent instance for browser automation */
-  agent: Agent
+  /** Agent options for creating the agent instance */
+  agentOptions?: AgentOptions
   /** Task description for the workflow to accomplish */
   task: string
 }
