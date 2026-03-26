@@ -3,35 +3,6 @@
  */
 
 // ============================================================================
-// LLM Configuration Types
-// ============================================================================
-
-export type LLMProvider =
-  | 'anthropic'
-  | 'openai'
-  | 'google'
-  | 'openrouter'
-  | 'azure'
-  | 'ollama'
-  | 'lmstudio'
-  | 'bedrock'
-  | 'browseros'
-  | 'openai-compatible'
-  | 'moonshot'
-
-export interface LLMConfig {
-  provider: LLMProvider
-  model?: string
-  apiKey?: string
-  baseUrl?: string
-  resourceName?: string
-  region?: string
-  accessKeyId?: string
-  secretAccessKey?: string
-  sessionToken?: string
-}
-
-// ============================================================================
 // Browser Context Types
 // ============================================================================
 
@@ -49,32 +20,6 @@ export interface BrowserContext {
   tabs?: Tab[]
   enabledMcpServers?: string[]
 }
-
-// ============================================================================
-// UI Message Stream Types
-// ============================================================================
-
-export type UIMessageStreamEvent =
-  | { type: 'start'; messageId?: string }
-  | { type: 'start-step' }
-  | { type: 'finish-step' }
-  | { type: 'finish'; finishReason: string; messageMetadata?: unknown }
-  | { type: 'abort' }
-  | { type: 'error'; errorText: string }
-  | { type: 'text-start'; id: string }
-  | { type: 'text-delta'; id: string; delta: string }
-  | { type: 'text-end'; id: string }
-  | { type: 'reasoning-start'; id: string }
-  | { type: 'reasoning-delta'; id: string; delta: string }
-  | { type: 'reasoning-end'; id: string }
-  | { type: 'tool-input-start'; toolCallId: string; toolName: string }
-  | { type: 'tool-input-delta'; toolCallId: string; inputTextDelta: string }
-  | { type: 'tool-input-available'; toolCallId: string; toolName: string; input: unknown }
-  | { type: 'tool-input-error'; toolCallId: string; errorText: string }
-  | { type: 'tool-output-available'; toolCallId: string; output: unknown }
-  | { type: 'tool-output-error'; toolCallId: string; errorText: string }
-  | { type: 'source-url'; sourceId: string; url: string; title?: string }
-  | { type: 'file'; url: string; mediaType: string }
 
 // ============================================================================
 // Agent Options Types
@@ -163,6 +108,14 @@ export interface CallResult<T = unknown> {
   status: number
 }
 
+export interface SendTextResult {
+  success: boolean
+}
+
+export interface SendImageResult {
+  success: boolean
+}
+
 // ============================================================================
 // Progress Event Types
 // ============================================================================
@@ -190,6 +143,8 @@ export interface WorkflowContext {
   agentOptions?: AgentOptions
   /** Task description for the workflow to accomplish */
   task: string
+  /** Chat ID for the current conversation */
+  chatId?: string
 }
 
 // ============================================================================
@@ -237,6 +192,14 @@ export class CallError extends Error {
   constructor(message: string, public readonly statusCode?: number)
 }
 
+export class SendTextError extends Error {
+  constructor(message: string, public readonly statusCode?: number)
+}
+
+export class SendImageError extends Error {
+  constructor(message: string, public readonly statusCode?: number)
+}
+
 // ============================================================================
 // Agent Class
 // ============================================================================
@@ -254,6 +217,8 @@ export class Agent implements AsyncDisposable {
   act(instruction: string, options?: ActOptions): Promise<ActResult>
   complete(prompt: string, options?: CompleteOptions): Promise<CompleteResult>
   call<T = unknown>(endpoint: string, options?: CallOptions): Promise<CallResult<T>>
+  sendText(chatId: string, title: string, content: string): Promise<SendTextResult>
+  sendImage(chatId: string, base64Image: string): Promise<SendImageResult>
   dispose(): Promise<void>
   [Symbol.asyncDispose](): Promise<void>
   throwIfAborted(): void

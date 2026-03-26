@@ -26,6 +26,5 @@ export type {
   SendImageResult,
   Tab,
   ToolCall,
-  UIMessageStreamEvent,
   WorkflowContext,
 } from './types'

@@ -1,44 +1,6 @@
 import type { ZodSchema } from 'zod'
 
 // ============================================================================
-// LLM Configuration Types (embedded from shared)
-// ============================================================================
-
-/**
- * Supported LLM providers
- */
-export type LLMProvider =
-  | 'anthropic'
-  | 'openai'
-  | 'google'
-  | 'openrouter'
-  | 'azure'
-  | 'ollama'
-  | 'lmstudio'
-  | 'bedrock'
-  | 'browseros'
-  | 'openai-compatible'
-  | 'moonshot'
-
-/**
- * LLM configuration schema
- * Used by SDK endpoints and agent configuration
- */
-export interface LLMConfig {
-  provider: LLMProvider
-  model?: string
-  apiKey?: string
-  baseUrl?: string
-  // Azure-specific
-  resourceName?: string
-  // AWS Bedrock-specific
-  region?: string
-  accessKeyId?: string
-  secretAccessKey?: string
-  sessionToken?: string
-}
-
-// ============================================================================
 // Browser Context Types (embedded from shared)
 // ============================================================================
 
@@ -64,35 +26,6 @@ export interface BrowserContext {
   tabs?: Tab[]
   enabledMcpServers?: string[]
 }
-
-// ============================================================================
-// UI Message Stream Types (embedded from shared)
-// ============================================================================
-
-/**
- * UI Message Stream events (Vercel AI SDK format).
- */
-export type UIMessageStreamEvent =
-  | { type: 'start'; messageId?: string }
-  | { type: 'start-step' }
-  | { type: 'finish-step' }
-  | { type: 'finish'; finishReason: string; messageMetadata?: unknown }
-  | { type: 'abort' }
-  | { type: 'error'; errorText: string }
-  | { type: 'text-start'; id: string }
-  | { type: 'text-delta'; id: string; delta: string }
-  | { type: 'text-end'; id: string }
-  | { type: 'reasoning-start'; id: string }
-  | { type: 'reasoning-delta'; id: string; delta: string }
-  | { type: 'reasoning-end'; id: string }
-  | { type: 'tool-input-start'; toolCallId: string; toolName: string }
-  | { type: 'tool-input-delta'; toolCallId: string; inputTextDelta: string }
-  | { type: 'tool-input-available'; toolCallId: string; toolName: string; input: unknown }
-  | { type: 'tool-input-error'; toolCallId: string; errorText: string }
-  | { type: 'tool-output-available'; toolCallId: string; output: unknown }
-  | { type: 'tool-output-error'; toolCallId: string; errorText: string }
-  | { type: 'source-url'; sourceId: string; url: string; title?: string }
-  | { type: 'file'; url: string; mediaType: string }
 
 // ============================================================================
 // Agent SDK Types

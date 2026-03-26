@@ -1,4 +1,4 @@
-import type { BrowserContext, UIMessageStreamEvent } from './types'
+import type { BrowserContext } from './types'
 
 /**
  * Context interface that method modules use to access agent state and utilities.
