@@ -145,6 +145,8 @@ export interface WorkflowContext {
   task: string
   /** Chat ID for the current conversation */
   chatId?: string
+  /** Key-value pairs for workflow parameters */
+  params?: Record<string, unknown>
 }
 
 // ============================================================================
