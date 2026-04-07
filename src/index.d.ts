@@ -36,14 +36,6 @@ export interface NavOptions {
   windowId?: number
 }
 
-export interface ActOptions {
-  context?: Record<string, unknown>
-  maxSteps?: number
-  windowId?: number
-  resetState?: boolean
-  maxRetries?: number
-}
-
 export interface ExtractOptions<T> {
   schema: unknown
   context?: Record<string, unknown>
@@ -71,16 +63,6 @@ export interface CallOptions {
 
 export interface NavResult {
   success: boolean
-}
-
-export interface ActResult {
-  success: boolean
-  steps: ActStep[]
-}
-
-export interface ActStep {
-  thought?: string
-  toolCalls?: ToolCall[]
 }
 
 export interface ToolCall {
@@ -122,7 +104,6 @@ export interface SendImageResult {
 
 export type ProgressEventType =
   | 'nav'
-  | 'act'
   | 'extract'
   | 'verify'
   | 'error'
@@ -216,7 +197,6 @@ export class Agent implements AsyncDisposable {
   get sessionId(): string | null
   set sessionId(value: string | null)
 
-  act(instruction: string, options?: ActOptions): Promise<ActResult>
   complete(prompt: string, options?: CompleteOptions): Promise<CompleteResult>
   call<T = unknown>(endpoint: string, options?: CallOptions): Promise<CallResult<T>>
   sendText(chatId: string, title: string, content: string): Promise<SendTextResult>

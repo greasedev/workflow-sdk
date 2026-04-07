@@ -58,30 +58,6 @@ export interface NavOptions {
 }
 
 /**
- * Options for the `act()` method.
- */
-export interface ActOptions {
-  /** Key-value pairs to interpolate into the instruction using `{{key}}` syntax */
-  context?: Record<string, unknown>
-  /** Maximum number of steps for multi-step actions (default: 10) */
-  maxSteps?: number
-  /** Target a specific window by ID */
-  windowId?: number
-  /**
-   * Reset conversation state for this act() call.
-   * Starts fresh and continues with the new state for subsequent calls.
-   * @default false
-   */
-  resetState?: boolean
-  /**
-   * Maximum retry attempts when verification fails.
-   * Only used when `verify` is set.
-   * @default 1
-   */
-  maxRetries?: number
-}
-
-/**
  * Options for the `extract()` method.
  */
 export interface ExtractOptions<T> {
@@ -104,7 +80,6 @@ export interface VerifyOptions {
  */
 export type ProgressEventType =
   | 'nav'
-  | 'act'
   | 'extract'
   | 'verify'
   | 'error'
@@ -128,26 +103,6 @@ export interface ProgressEvent {
 export interface NavResult {
   /** Whether navigation succeeded */
   success: boolean
-}
-
-/**
- * Result returned by `act()`.
- */
-export interface ActResult {
-  /** Whether the action succeeded */
-  success: boolean
-  /** The steps executed to complete the action */
-  steps: ActStep[]
-}
-
-/**
- * A single step executed during an `act()` call.
- */
-export interface ActStep {
-  /** The agent's reasoning for this step */
-  thought?: string
-  /** Tool calls made during this step */
-  toolCalls?: ToolCall[]
 }
 
 /**

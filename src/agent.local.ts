@@ -1,10 +1,10 @@
 import type { AgentContext } from './context'
 import { WorkflowSDKError } from './errors'
-import { call } from './methods/call'
-import { complete } from './methods/complete'
-import { sendImage } from './methods/send-image'
-import { sendText } from './methods/send-text'
-import { request } from './utils/request'
+import { call } from './methods/local/call'
+import { complete } from './methods/local/complete'
+import { sendImage } from './methods/local/send-image'
+import { sendText } from './methods/local/send-text'
+import { request } from './utils/request.local'
 import type {
   AgentOptions,
   BrowserContext,
@@ -27,8 +27,8 @@ class DisposeError extends WorkflowSDKError {
 }
 
 /**
- * Browser automation agent for GreaseClaw workflows.
- * Provides high-level methods to interact with browser and call APIs.
+ * Browser automation agent for GreaseClaw workflows (LOCAL mode).
+ * Uses mock implementations for local development/testing.
  *
  * @remarks
  * The Agent instance is injected by the runtime - never instantiate it directly.
@@ -36,7 +36,7 @@ class DisposeError extends WorkflowSDKError {
  *
  * @example
  * ```typescript
- * import type { Agent } from '@greaseclaw/workflow-sdk'
+ * import type { Agent } from '@greaseclaw/workflow-sdk/local'
  *
  * export async function run(agent: Agent) {
  *   const { text } = await agent.complete('Summarize the page')
@@ -100,20 +100,15 @@ export class Agent implements AsyncDisposable, AgentContext {
   }
 
   /**
-   * Generate a text completion using the LLM.
+   * Generate a text completion using the LLM (mocked in LOCAL mode).
    *
    * @param prompt - The prompt to send to the LLM
    * @param options - Optional completion settings
    * @returns Promise resolving to `{ text: string }`
-   * @throws {CompletionError} When completion fails
    *
    * @example
    * ```typescript
    * const { text } = await agent.complete('Summarize the current page')
-   *
-   * const { text } = await agent.complete('Analyze this data', {
-   *   system: 'You are a data analyst'
-   * })
    * ```
    */
   complete(prompt: string, options?: CompleteOptions): Promise<CompleteResult> {
@@ -121,28 +116,15 @@ export class Agent implements AsyncDisposable, AgentContext {
   }
 
   /**
-   * Call an API endpoint.
+   * Call an API endpoint (mocked in LOCAL mode).
    *
    * @param endpoint - The API endpoint path (e.g., '/api/users')
    * @param options - Optional request settings
    * @returns Promise resolving to `{ data: T, status: number }`
-   * @throws {CallError} When the request fails
    *
    * @example
    * ```typescript
-   * // GET request
    * const { data } = await agent.call('/api/users')
-   *
-   * // POST request
-   * const { data } = await agent.call('/api/users', {
-   *   method: 'POST',
-   *   body: { name: 'John' }
-   * })
-   *
-   * // With query parameters
-   * const { data } = await agent.call('/api/users', {
-   *   query: { page: 1, limit: 10 }
-   * })
    * ```
    */
   call<T = unknown>(endpoint: string, options?: CallOptions): Promise<CallResult<T>> {
@@ -150,13 +132,12 @@ export class Agent implements AsyncDisposable, AgentContext {
   }
 
   /**
-   * Send a text message.
+   * Send a text message (mocked in LOCAL mode).
    *
    * @param chatId - The chat ID to send the message to
    * @param title - The title of the message
    * @param content - The content of the message
    * @returns Promise resolving to `{ success: boolean }`
-   * @throws {SendTextError} When sending fails
    *
    * @example
    * ```typescript
@@ -168,12 +149,11 @@ export class Agent implements AsyncDisposable, AgentContext {
   }
 
   /**
-   * Send an image.
+   * Send an image (mocked in LOCAL mode).
    *
    * @param chatId - The chat ID to send the image to
    * @param base64Image - Base64 encoded image string
    * @returns Promise resolving to `{ success: boolean }`
-   * @throws {SendImageError} When sending fails
    *
    * @example
    * ```typescript
