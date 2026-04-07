@@ -7,14 +7,17 @@
  *   workflow-dev src/default_workflow.ts '{"task":"test","params":{}}'
  *
  * This script:
- * 1. Loads a workflow file using tsx (TypeScript execution)
- * 2. Uses the local version of workflow-sdk (connects to localhost:9222)
+ * 1. Creates a temporary tsconfig.json with SDK alias to local version
+ * 2. Loads the workflow file using tsx with the custom tsconfig
  * 3. Calls the execute function with the provided or default context
  */
 
-import { pathToFileURL } from 'url';
-import { resolve } from 'path';
+import { pathToFileURL, fileURLToPath } from 'url';
+import { resolve, dirname, basename } from 'path';
+import { writeFileSync, readFileSync, existsSync, unlinkSync, mkdtempSync, rmdirSync } from 'fs';
+import { tmpdir } from 'os';
 import json5 from 'json5';
+import { spawn } from 'child_process';
 
 // Get command line arguments
 const workflowPath = process.argv[2];
@@ -35,9 +38,10 @@ if (!workflowPath) {
   process.exit(1);
 }
 
-const resolvedPath = resolve(process.cwd(), workflowPath);
+const cwd = process.cwd();
+const resolvedWorkflowPath = resolve(cwd, workflowPath);
 
-console.log(`Loading workflow: ${resolvedPath}`);
+console.log(`Loading workflow: ${resolvedWorkflowPath}`);
 console.log('SDK mode: local (localhost:9222)');
 console.log('');
 
@@ -66,46 +70,88 @@ if (contextJson) {
   console.log('Using default test context. Provide context-json to customize.');
 }
 
-async function main() {
-  try {
-    // Dynamic import of workflow file
-    // tsx handles TypeScript compilation and module resolution
-    await import(pathToFileURL(resolvedPath).href);
+// Find workflow-sdk path by importing it and checking the URL
+const sdkModuleUrl = await import.meta.resolve('@greaseclaw/workflow-sdk/local');
+const sdkModulePath = fileURLToPath(sdkModuleUrl);
+const sdkDistPath = dirname(sdkModulePath);
 
-    // Wait for module to initialize (workflows set globalThis.execute)
-    await new Promise(r => setTimeout(r, 100));
+// Create temporary directory for tsconfig
+const tempDir = mkdtempSync(resolve(tmpdir(), 'workflow-dev-'));
 
-    // Get the execute function from globalThis
-    const execute = globalThis.execute;
-
-    if (!execute) {
-      console.error('Error: Workflow does not define execute function on globalThis');
-      console.error('Make sure your workflow file has: globalThis.execute = execute;');
-      process.exit(1);
+// Create temporary tsconfig.json with alias
+const tempTsconfig = resolve(tempDir, 'tsconfig.json');
+const tsconfigContent = {
+  compilerOptions: {
+    baseUrl: cwd,
+    paths: {
+      '@greaseclaw/workflow-sdk': [resolve(sdkDistPath, 'index.local.js')],
+      '@greaseclaw/workflow-sdk/*': [resolve(sdkDistPath, '*')]
     }
-
-    console.log('Context:', JSON.stringify(context, null, 2));
-    console.log('');
-    console.log('Executing workflow...\n');
-
-    const result = await execute(context);
-
-    console.log('\nResult:', JSON.stringify(result, null, 2));
-
-    if (result && result.success) {
-      console.log('\n✓ Workflow completed successfully');
-    } else {
-      console.log('\n✗ Workflow failed');
-      process.exit(1);
-    }
-  } catch (error) {
-    console.error('\n✗ Error:', error.message || error);
-    if (error.stack) {
-      console.error('\nStack trace:');
-      console.error(error.stack);
-    }
-    process.exit(1);
   }
+};
+writeFileSync(tempTsconfig, JSON.stringify(tsconfigContent, null, 2));
+
+// Create runner script that imports workflow and executes it
+const runnerScript = resolve(tempDir, 'runner.mjs');
+const runnerContent = `
+import { pathToFileURL } from 'url';
+
+// Store context in globalThis for runner to access
+globalThis.__workflowContext = ${JSON.stringify(context)};
+
+// Import the workflow file
+await import(pathToFileURL('${resolvedWorkflowPath}').href);
+
+// Wait for workflow to initialize
+await new Promise(r => setTimeout(r, 100));
+
+// Get execute function
+const execute = globalThis.execute;
+if (!execute) {
+  console.error('Error: Workflow does not define execute function on globalThis');
+  process.exit(1);
 }
 
-main();
+// Run workflow
+const result = await execute(globalThis.__workflowContext);
+console.log('\\nResult:', JSON.stringify(result, null, 2));
+
+if (result && result.success) {
+  console.log('\\n✓ Workflow completed successfully');
+} else {
+  console.log('\\n✗ Workflow failed');
+  process.exit(1);
+}
+`;
+writeFileSync(runnerScript, runnerContent);
+
+// Find tsx CLI path - use absolute path since exports don't expose it
+const tsxPackageDir = dirname(fileURLToPath(await import.meta.resolve('tsx')));
+const tsxCliPath = resolve(tsxPackageDir, 'cli.mjs');
+
+// Run tsx with custom tsconfig
+const child = spawn(process.execPath, [
+  tsxCliPath,
+  '--tsconfig', tempTsconfig,
+  runnerScript
+], {
+  stdio: 'inherit',
+  cwd: cwd,
+  env: { ...process.env }
+});
+
+child.on('close', (code) => {
+  // Cleanup temp files
+  try {
+    unlinkSync(tempTsconfig);
+    unlinkSync(runnerScript);
+    try { rmdirSync(tempDir); } catch {}
+  } catch {}
+
+  process.exit(code || 0);
+});
+
+child.on('error', (err) => {
+  console.error('Failed to start workflow:', err);
+  process.exit(1);
+});
