@@ -4,7 +4,7 @@ import type { CallOptions, CallResult } from '../../types'
 /**
  * Default API base URL for LOCAL mode
  */
-const DEFAULT_API_BASE_URL = 'http://localhost:3000'
+const DEFAULT_API_BASE_URL = 'http://localhost:9222'
 
 /**
  * Error for call operations
