@@ -1,5 +1,5 @@
 import type { AgentContext } from '../../context'
-import type { SendImageResult } from '../../types'
+import type { SendImageResult, Visibility } from '../../types'
 
 /**
  * Error for sendImage operations
@@ -18,10 +18,11 @@ export async function sendImage(
   ctx: AgentContext,
   chatId: string,
   base64Image: string,
+  visibility: Visibility = 'user',
 ): Promise<SendImageResult> {
   ctx.throwIfAborted()
 
   // Mock implementation - returns success
-  console.log(`[MOCK] sendImage: chatId="${chatId}", imageLength=${base64Image.length}`)
+  console.log(`[MOCK] sendImage: chatId="${chatId}", imageLength=${base64Image.length}, visibility="${visibility}"`)
   return { success: true }
 }

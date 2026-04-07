@@ -23,5 +23,6 @@ export type {
   SendImageResult,
   Tab,
   ToolCall,
+  Visibility,
   WorkflowContext,
 } from './types'

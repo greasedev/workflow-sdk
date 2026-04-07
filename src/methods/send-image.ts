@@ -1,6 +1,6 @@
 import type { AgentContext } from '../context'
 import { ConnectionError } from '../errors'
-import type { SendImageResult } from '../types'
+import type { SendImageResult, Visibility } from '../types'
 
 /**
  * Error for sendImage operations
@@ -19,13 +19,14 @@ export async function sendImage(
   ctx: AgentContext,
   chatId: string,
   base64Image: string,
+  visibility: Visibility = 'user',
 ): Promise<SendImageResult> {
   ctx.throwIfAborted()
 
   const response = await chrome.runtime.sendMessage({
     type: 'WORKFLOW_REQUEST',
     endpoint: '/sdk/send_image',
-    body: { chatId, base64Image },
+    body: { chatId, base64Image, visibility },
   })
 
   if (!response || typeof response !== 'object') {

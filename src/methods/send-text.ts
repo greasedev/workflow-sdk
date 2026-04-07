@@ -1,6 +1,6 @@
 import type { AgentContext } from '../context'
 import { ConnectionError } from '../errors'
-import type { SendTextResult } from '../types'
+import type { SendTextResult, Visibility } from '../types'
 
 /**
  * Error for sendText operations
@@ -20,13 +20,14 @@ export async function sendText(
   chatId: string,
   title: string,
   content: string,
+  visibility: Visibility = 'user',
 ): Promise<SendTextResult> {
   ctx.throwIfAborted()
 
   const response = await chrome.runtime.sendMessage({
     type: 'WORKFLOW_REQUEST',
     endpoint: '/sdk/send_text',
-    body: { chatId, title, content },
+    body: { chatId, title, content, visibility },
   })
 
   if (!response || typeof response !== 'object') {

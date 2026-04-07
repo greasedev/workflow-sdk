@@ -180,6 +180,11 @@ export interface CallResult<T = unknown> {
 }
 
 /**
+ * Visibility level for messages
+ */
+export type Visibility = 'user' | 'agent' | 'all'
+
+/**
  * Result returned by `sendText()`.
  */
 export interface SendTextResult {

@@ -14,6 +14,7 @@ import type {
   CompleteResult,
   SendImageResult,
   SendTextResult,
+  Visibility,
 } from './types'
 
 /**
@@ -137,6 +138,7 @@ export class Agent implements AsyncDisposable, AgentContext {
    * @param chatId - The chat ID to send the message to
    * @param title - The title of the message
    * @param content - The content of the message
+   * @param visibility - Who can see the message: 'user' (default), 'agent', or 'all'
    * @returns Promise resolving to `{ success: boolean }`
    *
    * @example
@@ -144,8 +146,8 @@ export class Agent implements AsyncDisposable, AgentContext {
    * await agent.sendText('chat-123', 'Title', 'Hello, how can I help you?')
    * ```
    */
-  sendText(chatId: string, title: string, content: string): Promise<SendTextResult> {
-    return sendText(this, chatId, title, content)
+  sendText(chatId: string, title: string, content: string, visibility?: Visibility): Promise<SendTextResult> {
+    return sendText(this, chatId, title, content, visibility)
   }
 
   /**
@@ -153,6 +155,7 @@ export class Agent implements AsyncDisposable, AgentContext {
    *
    * @param chatId - The chat ID to send the image to
    * @param base64Image - Base64 encoded image string
+   * @param visibility - Who can see the image: 'user' (default), 'agent', or 'all'
    * @returns Promise resolving to `{ success: boolean }`
    *
    * @example
@@ -160,7 +163,7 @@ export class Agent implements AsyncDisposable, AgentContext {
    * await agent.sendImage('chat-123', 'data:image/png;base64,iVBORw0KGgo...')
    * ```
    */
-  sendImage(chatId: string, base64Image: string): Promise<SendImageResult> {
-    return sendImage(this, chatId, base64Image)
+  sendImage(chatId: string, base64Image: string, visibility?: Visibility): Promise<SendImageResult> {
+    return sendImage(this, chatId, base64Image, visibility)
   }
 }

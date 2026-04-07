@@ -1,5 +1,5 @@
 import type { AgentContext } from '../../context'
-import type { SendTextResult } from '../../types'
+import type { SendTextResult, Visibility } from '../../types'
 
 /**
  * Error for sendText operations
@@ -19,10 +19,11 @@ export async function sendText(
   chatId: string,
   title: string,
   content: string,
+  visibility: Visibility = 'user',
 ): Promise<SendTextResult> {
   ctx.throwIfAborted()
 
   // Mock implementation - returns success
-  console.log(`[MOCK] sendText: chatId="${chatId}", title="${title}", content="${content}"`)
+  console.log(`[MOCK] sendText: chatId="${chatId}", title="${title}", content="${content}", visibility="${visibility}"`)
   return { success: true }
 }
