@@ -5,7 +5,7 @@ import type { CompleteOptions, CompleteResult } from '../../types';
  *
  * Environment variables:
  * - OPENAI_API_KEY: Required for OpenAI provider
- * - OPENAI_BASE_URL: Optional, for custom API endpoint (e.g., Ollama, vLLM)
+ * - OPENAI_BASE_URL: Optional, for custom API endpoint (e.g., Ollama, vLLM, DashScope)
  * - LOCAL_MODEL: Optional, defaults to 'gpt-4o-mini'
  */
 export declare function complete(ctx: AgentContext, prompt: string, options?: CompleteOptions): Promise<CompleteResult>;
