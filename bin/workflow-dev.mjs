@@ -7,9 +7,14 @@
  *   workflow-dev src/default_workflow.ts '{"task":"test","params":{}}'
  *
  * This script:
- * 1. Creates a temporary tsconfig.json with SDK alias to local version
- * 2. Loads the workflow file using tsx with the custom tsconfig
- * 3. Calls the execute function with the provided or default context
+ * 1. Loads .env file from current working directory
+ * 2. Creates a temporary tsconfig.json with SDK alias to local version
+ * 3. Loads the workflow file using tsx with the custom tsconfig
+ * 4. Calls the execute function with the provided or default context
+ *
+ * Environment Variables:
+ *   OPENAI_API_KEY    - OpenAI API key for LLM completions
+ *   CDP_BASE_URL      - Chrome DevTools Protocol base URL (default: http://localhost:9222/json/api)
  */
 
 import { pathToFileURL, fileURLToPath } from 'url';
@@ -18,6 +23,32 @@ import { writeFileSync, readFileSync, existsSync, unlinkSync, mkdtempSync, rmdir
 import { tmpdir } from 'os';
 import json5 from 'json5';
 import { spawn } from 'child_process';
+
+// Load .env file if exists
+const envPath = resolve(process.cwd(), '.env');
+if (existsSync(envPath)) {
+  const envContent = readFileSync(envPath, 'utf-8');
+  for (const line of envContent.split('\n')) {
+    const trimmed = line.trim();
+    // Skip comments and empty lines
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIndex = trimmed.indexOf('=');
+    if (eqIndex > 0) {
+      const key = trimmed.slice(0, eqIndex).trim();
+      let value = trimmed.slice(eqIndex + 1).trim();
+      // Remove quotes
+      if ((value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
+      // Only set if not already defined
+      if (process.env[key] === undefined) {
+        process.env[key] = value;
+      }
+    }
+  }
+  console.log('Loaded .env file');
+}
 
 // Get command line arguments
 const workflowPath = process.argv[2];
