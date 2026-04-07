@@ -13,7 +13,7 @@ const DEFAULT_MODEL = 'gpt-4o-mini'
  *
  * Environment variables:
  * - OPENAI_API_KEY: Required for OpenAI provider
- * - OPENAI_BASE_URL: Optional, for custom API endpoint (e.g., Ollama, vLLM)
+ * - OPENAI_BASE_URL: Optional, for custom API endpoint (e.g., Ollama, vLLM, DashScope)
  * - LOCAL_MODEL: Optional, defaults to 'gpt-4o-mini'
  */
 export async function complete(
@@ -26,12 +26,14 @@ export async function complete(
   const model = process.env.LOCAL_MODEL ?? DEFAULT_MODEL
   const baseUrl = process.env.OPENAI_BASE_URL
 
+  // Use chat completions API for better compatibility with OpenAI-compatible endpoints
+  // (DashScope, Ollama, vLLM, etc.)
   const client = baseUrl
     ? createOpenAI({ baseURL: baseUrl })
     : openai
 
   const result = await generateText({
-    model: client(model),
+    model: client.chat(model),
     prompt,
     system: options?.system,
   })
