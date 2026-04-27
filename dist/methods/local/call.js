@@ -1,7 +1,8 @@
 /**
  * Default API base URL for LOCAL mode
+ * Can be overridden via CDP_BASE_URL environment variable
  */
-const DEFAULT_API_BASE_URL = 'http://localhost:9222/json/api';
+const DEFAULT_API_BASE_URL = process.env.CDP_BASE_URL ?? 'http://localhost:9222/json/api';
 /**
  * Error for call operations
  */
