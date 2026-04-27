@@ -50,6 +50,23 @@ export declare class Agent implements AsyncDisposable, AgentContext {
      */
     getDb(): Dexie;
     /**
+     * Generate a page link XML tag for the given page ID and parameters.
+     *
+     * @param pageId - The page identifier (e.g., 'index', 'detail')
+     * @param params - Optional query parameters
+     * @returns HTML string in XML tag format: `<pageLink>pageId.html?params</pageLink>`
+     *
+     * @example
+     * ```typescript
+     * agent.getPageLink('index', { query: 'key' })
+     * // Returns: '<pageLink>index.html?query=key</pageLink>'
+     *
+     * agent.getPageLink('detail')
+     * // Returns: '<pageLink>detail.html</pageLink>'
+     * ```
+     */
+    getPageLink(pageId: string, params?: Record<string, string | number | boolean>): string;
+    /**
      * Generate a text completion using the LLM (mocked in LOCAL mode).
      *
      * @param prompt - The prompt to send to the LLM

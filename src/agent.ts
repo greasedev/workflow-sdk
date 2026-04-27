@@ -58,7 +58,7 @@ export class Agent implements AsyncDisposable, AgentContext {
   private _db: Dexie | null = null
 
   constructor(options: AgentOptions) {
-    this.agentId = options.agentId ?? crypto.randomUUID()
+    this.agentId = options.agentId ?? process.env.AGENT_ID ?? crypto.randomUUID()
     this.signal = options.signal
     this.browserContext = options.browserContext
     this.stateful = options.stateful ?? true
@@ -123,6 +123,31 @@ export class Agent implements AsyncDisposable, AgentContext {
       this._db = new Dexie(`db-${this.agentId}`)
     }
     return this._db
+  }
+
+  /**
+   * Generate a page link XML tag for the given page ID and parameters.
+   *
+   * @param pageId - The page identifier (e.g., 'index', 'detail')
+   * @param params - Optional query parameters
+   * @returns HTML string in XML tag format: `<pageLink>pageId.html?params</pageLink>`
+   *
+   * @example
+   * ```typescript
+   * agent.getPageLink('index', { query: 'key' })
+   * // Returns: '<pageLink>index.html?query=key</pageLink>'
+   *
+   * agent.getPageLink('detail')
+   * // Returns: '<pageLink>detail.html</pageLink>'
+   * ```
+   */
+  getPageLink(pageId: string, params?: Record<string, string | number | boolean>): string {
+    const href = params && Object.keys(params).length > 0
+      ? `${pageId}.html?${new URLSearchParams(
+          Object.entries(params).map(([k, v]) => [k, String(v)])
+        ).toString()}`
+      : `${pageId}.html`
+    return `<pageLink>${href}</pageLink>`
   }
 
   /**

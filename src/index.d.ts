@@ -212,6 +212,14 @@ export class Agent implements AsyncDisposable {
    */
   getDb(): Dexie
 
+  /**
+   * Generate a page link XML tag for the given page ID and parameters.
+   * @param pageId - The page identifier (e.g., 'index', 'detail')
+   * @param params - Optional query parameters
+   * @returns HTML string in XML tag format: `<pageLink>pageId.html?params</pageLink>`
+   */
+  getPageLink(pageId: string, params?: Record<string, string | number | boolean>): string
+
   complete(prompt: string, options?: CompleteOptions): Promise<CompleteResult>
   call<T = unknown>(endpoint: string, options?: CallOptions): Promise<CallResult<T>>
   sendText(chatId: string, title: string, content: string): Promise<SendTextResult>
