@@ -12,6 +12,6 @@ export class SendImageError extends Error {
 export async function sendImage(ctx, chatId, base64Image, visibility = 'user') {
     ctx.throwIfAborted();
     // Mock implementation - returns success
-    console.log(`[MOCK] sendImage: chatId="${chatId}", imageLength=${base64Image.length}, visibility="${visibility}"`);
+    console.log(`[MOCK] sendImage: agentId="${ctx.agentId}", chatId="${chatId}", imageLength=${base64Image.length}, visibility="${visibility}"`);
     return { success: true };
 }

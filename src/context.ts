@@ -5,6 +5,7 @@ import type { BrowserContext } from './types'
  * The Agent class implements this interface.
  */
 export interface AgentContext {
+  readonly agentId: string
   readonly browserContext?: BrowserContext
   readonly signal?: AbortSignal
   readonly stateful: boolean

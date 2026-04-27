@@ -27,7 +27,7 @@ export async function sendText(
   const response = await chrome.runtime.sendMessage({
     type: 'WORKFLOW_REQUEST',
     endpoint: '/sdk/send_text',
-    body: { chatId, title, content, visibility },
+    body: { agentId: ctx.agentId, chatId, title, content, visibility },
   })
 
   if (!response || typeof response !== 'object') {

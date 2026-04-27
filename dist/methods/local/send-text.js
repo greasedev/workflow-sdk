@@ -12,6 +12,6 @@ export class SendTextError extends Error {
 export async function sendText(ctx, chatId, title, content, visibility = 'user') {
     ctx.throwIfAborted();
     // Mock implementation - returns success
-    console.log(`[MOCK] sendText: chatId="${chatId}", title="${title}", content="${content}", visibility="${visibility}"`);
+    console.log(`[MOCK] sendText: agentId="${ctx.agentId}", chatId="${chatId}", title="${title}", content="${content}", visibility="${visibility}"`);
     return { success: true };
 }

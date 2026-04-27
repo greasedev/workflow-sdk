@@ -15,7 +15,7 @@ export async function sendImage(ctx, chatId, base64Image, visibility = 'user') {
     const response = await chrome.runtime.sendMessage({
         type: 'WORKFLOW_REQUEST',
         endpoint: '/sdk/send_image',
-        body: { chatId, base64Image, visibility },
+        body: { agentId: ctx.agentId, chatId, base64Image, visibility },
     });
     if (!response || typeof response !== 'object') {
         throw new ConnectionError(`Invalid response from background`, '/sdk/send_image');
