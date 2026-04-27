@@ -2,6 +2,10 @@
  * @greaseclaw/workflow-sdk Type Definitions
  */
 
+import Dexie from 'dexie'
+
+export type { Dexie }
+
 // ============================================================================
 // Browser Context Types
 // ============================================================================
@@ -26,6 +30,8 @@ export interface BrowserContext {
 // ============================================================================
 
 export interface AgentOptions {
+  /** Unique identifier for the agent instance */
+  agentId?: string
   browserContext?: BrowserContext
   signal?: AbortSignal
   stateful?: boolean
@@ -152,15 +158,14 @@ export interface WorkflowResponse<T = unknown> {
 // ============================================================================
 
 export class WorkflowSDKError extends Error {
-  constructor(
-    message: string,
-    public readonly code: string,
-    public readonly statusCode?: number,
-  )
+  code: string
+  statusCode?: number
+  constructor(message: string, code: string, statusCode?: number)
 }
 
 export class ConnectionError extends WorkflowSDKError {
-  constructor(message: string, public readonly url: string)
+  url: string
+  constructor(message: string, url: string)
 }
 
 export class ActionError extends WorkflowSDKError {
@@ -172,15 +177,18 @@ export class CompletionError extends WorkflowSDKError {
 }
 
 export class CallError extends Error {
-  constructor(message: string, public readonly statusCode?: number)
+  statusCode?: number
+  constructor(message: string, statusCode?: number)
 }
 
 export class SendTextError extends Error {
-  constructor(message: string, public readonly statusCode?: number)
+  statusCode?: number
+  constructor(message: string, statusCode?: number)
 }
 
 export class SendImageError extends Error {
-  constructor(message: string, public readonly statusCode?: number)
+  statusCode?: number
+  constructor(message: string, statusCode?: number)
 }
 
 // ============================================================================
@@ -188,6 +196,7 @@ export class SendImageError extends Error {
 // ============================================================================
 
 export class Agent implements AsyncDisposable {
+  readonly agentId: string
   readonly signal?: AbortSignal
   readonly browserContext?: BrowserContext
   readonly stateful: boolean
@@ -196,6 +205,12 @@ export class Agent implements AsyncDisposable {
 
   get sessionId(): string | null
   set sessionId(value: string | null)
+
+  /**
+   * Get the Dexie database instance for this agent.
+   * The database name is "db-{agentId}" and can be used for persistent storage.
+   */
+  getDb(): Dexie
 
   complete(prompt: string, options?: CompleteOptions): Promise<CompleteResult>
   call<T = unknown>(endpoint: string, options?: CallOptions): Promise<CallResult<T>>

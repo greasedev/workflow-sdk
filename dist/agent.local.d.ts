@@ -1,4 +1,5 @@
 import type { AgentContext } from './context';
+import Dexie from 'dexie';
 import type { AgentOptions, BrowserContext, CallOptions, CallResult, CompleteOptions, CompleteResult, SendImageResult, SendTextResult, Visibility } from './types';
 /**
  * Browser automation agent for GreaseClaw workflows (LOCAL mode).
@@ -20,17 +21,34 @@ import type { AgentOptions, BrowserContext, CallOptions, CallResult, CompleteOpt
  * ```
  */
 export declare class Agent implements AsyncDisposable, AgentContext {
+    readonly agentId: string;
     readonly signal?: AbortSignal;
     readonly browserContext?: BrowserContext;
     readonly stateful: boolean;
     private _sessionId;
     private _disposed;
+    private _db;
     constructor(options: AgentOptions);
     get sessionId(): string | null;
     set sessionId(value: string | null);
     dispose(): Promise<void>;
     [Symbol.asyncDispose](): Promise<void>;
     throwIfAborted(): void;
+    /**
+     * Get the Dexie database instance for this agent.
+     * The database name is "db-{agentId}" and can be used for persistent storage.
+     *
+     * @returns Dexie database instance
+     *
+     * @example
+     * ```typescript
+     * const db = agent.getDb()
+     * // Define schema and use for storage
+     * db.version(1).stores({ items: '++id, name' })
+     * await db.table('items').add({ name: 'test' })
+     * ```
+     */
+    getDb(): Dexie;
     /**
      * Generate a text completion using the LLM (mocked in LOCAL mode).
      *

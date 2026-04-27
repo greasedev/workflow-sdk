@@ -7,15 +7,45 @@
  *   page-build src/pages dist/pages
  *
  * This script:
- * 1. Finds all *.html files in src-dir
- * 2. Uses Vite with vite-plugin-singlefile to inline all assets (JS, CSS)
- * 3. Outputs single HTML files to dist-dir
+ * 1. Loads .env file from current working directory
+ * 2. Finds all *.html files in src-dir
+ * 3. Uses Vite with vite-plugin-singlefile to inline all assets (JS, CSS)
+ * 4. Outputs single HTML files to dist-dir
+ *
+ * Environment Variables:
+ *   CDP_BASE_URL      - Chrome DevTools Protocol base URL (default: http://localhost:9222/json/api)
  */
 
 import { build } from 'vite';
 import { readdirSync, existsSync, mkdirSync, rmSync, readFileSync, writeFileSync } from 'fs';
 import { join, parse, resolve } from 'path';
 import { viteSingleFile } from 'vite-plugin-singlefile';
+
+// Load .env file if exists
+const envPath = resolve(process.cwd(), '.env');
+if (existsSync(envPath)) {
+  const envContent = readFileSync(envPath, 'utf-8');
+  for (const line of envContent.split('\n')) {
+    const trimmed = line.trim();
+    // Skip comments and empty lines
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIndex = trimmed.indexOf('=');
+    if (eqIndex > 0) {
+      const key = trimmed.slice(0, eqIndex).trim();
+      let value = trimmed.slice(eqIndex + 1).trim();
+      // Remove quotes
+      if ((value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
+      // Only set if not already defined
+      if (process.env[key] === undefined) {
+        process.env[key] = value;
+      }
+    }
+  }
+  console.log('Loaded .env file');
+}
 
 // Get command line arguments
 const srcDir = resolve(process.cwd(), process.argv[2] || 'src/pages');
@@ -60,6 +90,10 @@ for (const file of files) {
   await build({
     root: srcDir,
     base: './',
+    define: {
+      // Replace process.env.CDP_BASE_URL for browser environment
+      'process.env.CDP_BASE_URL': JSON.stringify(process.env.CDP_BASE_URL || 'http://localhost:9222/json/api')
+    },
     logLevel: 'warn',
     build: {
       outDir: resolve(process.cwd(), `dist/pages-temp/${name}`),

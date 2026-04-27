@@ -5,6 +5,7 @@ import { complete } from './methods/complete'
 import { sendImage } from './methods/send-image'
 import { sendText } from './methods/send-text'
 import { request } from './utils/request'
+import Dexie from 'dexie'
 import type {
   AgentOptions,
   BrowserContext,
@@ -47,14 +48,17 @@ class DisposeError extends WorkflowSDKError {
  * ```
  */
 export class Agent implements AsyncDisposable, AgentContext {
+  readonly agentId: string
   readonly signal?: AbortSignal
   readonly browserContext?: BrowserContext
   readonly stateful: boolean
 
   private _sessionId: string | null = null
   private _disposed = false
+  private _db: Dexie | null = null
 
   constructor(options: AgentOptions) {
+    this.agentId = options.agentId ?? crypto.randomUUID()
     this.signal = options.signal
     this.browserContext = options.browserContext
     this.stateful = options.stateful ?? true
@@ -98,6 +102,27 @@ export class Agent implements AsyncDisposable, AgentContext {
     if (this.signal?.aborted) {
       throw new Error('Operation aborted')
     }
+  }
+
+  /**
+   * Get the Dexie database instance for this agent.
+   * The database name is "db-{agentId}" and can be used for persistent storage.
+   *
+   * @returns Dexie database instance
+   *
+   * @example
+   * ```typescript
+   * const db = agent.getDb()
+   * // Define schema and use for storage
+   * db.version(1).stores({ items: '++id, name' })
+   * await db.table('items').add({ name: 'test' })
+   * ```
+   */
+  getDb(): Dexie {
+    if (!this._db) {
+      this._db = new Dexie(`db-${this.agentId}`)
+    }
+    return this._db
   }
 
   /**

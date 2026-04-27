@@ -36,6 +36,8 @@ export interface BrowserContext {
  * @internal Used by runtime - not needed in generated code
  */
 export interface AgentOptions {
+  /** Unique identifier for the agent instance, used for database naming */
+  agentId?: string
   /** Browser context for targeting specific windows/tabs and MCP servers */
   browserContext?: BrowserContext
   signal?: AbortSignal
