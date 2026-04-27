@@ -82,6 +82,7 @@ const defaultContext = {
   chatId: 'test-chat-dev',
   params: {},
   agentOptions: {
+    agentId: process.env.AGENT_ID,
     stateful: true
   }
 };

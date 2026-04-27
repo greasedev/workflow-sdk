@@ -92,7 +92,9 @@ for (const file of files) {
     base: './',
     define: {
       // Replace process.env.CDP_BASE_URL for browser environment
-      'process.env.CDP_BASE_URL': JSON.stringify(process.env.CDP_BASE_URL || 'http://localhost:9222/json/api')
+      'process.env.CDP_BASE_URL': JSON.stringify(process.env.CDP_BASE_URL || 'http://localhost:9222/json/api'),
+      // Replace process.env.AGENT_ID for browser environment
+      'process.env.AGENT_ID': JSON.stringify(process.env.AGENT_ID || '')
     },
     logLevel: 'warn',
     build: {

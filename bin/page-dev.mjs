@@ -66,7 +66,9 @@ const server = await createServer({
   define: {
     // Replace process.env.CDP_BASE_URL for browser environment
     // Default to dev server port which proxies to CDP
-    'process.env.CDP_BASE_URL': JSON.stringify(process.env.CDP_BASE_URL || `http://localhost:${port}/json/api`)
+    'process.env.CDP_BASE_URL': JSON.stringify(process.env.CDP_BASE_URL || `http://localhost:${port}/json/api`),
+    // Replace process.env.AGENT_ID for browser environment
+    'process.env.AGENT_ID': JSON.stringify(process.env.AGENT_ID || '')
   },
   server: {
     port: port,
