@@ -6,6 +6,7 @@ import { sendImage } from './methods/local/send-image'
 import { sendText } from './methods/local/send-text'
 import { request } from './utils/request.local'
 import Dexie from 'dexie'
+import { createRequire } from 'module'
 import type {
   AgentOptions,
   BrowserContext,
@@ -18,13 +19,13 @@ import type {
   Visibility,
 } from './types'
 
-// Setup IndexedDB for Node.js environment (optional peer dependency)
+// Setup IndexedDB for Node.js environment using require (resolves from SDK directory)
 if (typeof indexedDB === 'undefined') {
   try {
-    // @ts-ignore - fake-indexeddb is optional peer dependency
-    await import('fake-indexeddb/auto')
+    const require = createRequire(import.meta.url)
+    require('fake-indexeddb/auto')
   } catch {
-    // fake-indexeddb not installed - getDb() will fail in Node.js
+    // fake-indexeddb not available - getDb() will fail in Node.js
   }
 }
 

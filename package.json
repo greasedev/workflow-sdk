@@ -50,17 +50,12 @@
     "@ai-sdk/openai": "^3.0.51",
     "ai": "^6.0.149",
     "dexie": "^4.4.2",
+    "fake-indexeddb": "^6.2.5",
     "json5": "^2.2.3",
     "zod-to-json-schema": "^3.24.1"
   },
   "peerDependencies": {
-    "zod": "^3.x",
-    "fake-indexeddb": "^6.2.5"
-  },
-  "peerDependenciesMeta": {
-    "fake-indexeddb": {
-      "optional": true
-    }
+    "zod": "^3.x"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.268",
