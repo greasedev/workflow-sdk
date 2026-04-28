@@ -1,6 +1,5 @@
 import type { AgentContext } from './context';
 import Dexie from 'dexie';
-import 'fake-indexeddb/auto';
 import type { AgentOptions, BrowserContext, CallOptions, CallResult, CompleteOptions, CompleteResult, SendImageResult, SendTextResult, Visibility } from './types';
 /**
  * Browser automation agent for GreaseClaw workflows (LOCAL mode).

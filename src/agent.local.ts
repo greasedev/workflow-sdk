@@ -6,7 +6,6 @@ import { sendImage } from './methods/local/send-image'
 import { sendText } from './methods/local/send-text'
 import { request } from './utils/request.local'
 import Dexie from 'dexie'
-import 'fake-indexeddb/auto' // Setup IndexedDB for Node.js environment
 import type {
   AgentOptions,
   BrowserContext,
@@ -18,6 +17,16 @@ import type {
   SendTextResult,
   Visibility,
 } from './types'
+
+// Setup IndexedDB for Node.js environment (optional peer dependency)
+if (typeof indexedDB === 'undefined') {
+  try {
+    // @ts-ignore - fake-indexeddb is optional peer dependency
+    await import('fake-indexeddb/auto')
+  } catch {
+    // fake-indexeddb not installed - getDb() will fail in Node.js
+  }
+}
 
 /**
  * Internal error class for dispose operations
