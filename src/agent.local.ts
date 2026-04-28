@@ -6,7 +6,6 @@ import { sendImage } from './methods/local/send-image'
 import { sendText } from './methods/local/send-text'
 import { request } from './utils/request.local'
 import Dexie from 'dexie'
-import { createRequire } from 'module'
 import type {
   AgentOptions,
   BrowserContext,
@@ -18,16 +17,6 @@ import type {
   SendTextResult,
   Visibility,
 } from './types'
-
-// Setup IndexedDB for Node.js environment using require (resolves from SDK directory)
-if (typeof indexedDB === 'undefined') {
-  try {
-    const require = createRequire(import.meta.url)
-    require('fake-indexeddb/auto')
-  } catch {
-    // fake-indexeddb not available - getDb() will fail in Node.js
-  }
-}
 
 /**
  * Internal error class for dispose operations

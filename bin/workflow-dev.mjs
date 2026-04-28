@@ -8,9 +8,10 @@
  *
  * This script:
  * 1. Loads .env file from current working directory
- * 2. Creates a temporary tsconfig.json with SDK alias to local version
- * 3. Loads the workflow file using tsx with the custom tsconfig
- * 4. Calls the execute function with the provided or default context
+ * 2. Sets up IndexedDB for Node.js environment (fake-indexeddb)
+ * 3. Creates a temporary tsconfig.json with SDK alias to local version
+ * 4. Loads the workflow file using tsx with the custom tsconfig
+ * 5. Calls the execute function with the provided or default context
  *
  * Environment Variables:
  *   OPENAI_API_KEY    - OpenAI API key for LLM completions
@@ -18,11 +19,18 @@
  */
 
 import { pathToFileURL, fileURLToPath } from 'url';
-import { resolve, dirname, basename } from 'path';
+import { resolve, dirname } from 'path';
 import { writeFileSync, readFileSync, existsSync, unlinkSync, mkdtempSync, rmdirSync } from 'fs';
 import { tmpdir } from 'os';
 import json5 from 'json5';
 import { spawn } from 'child_process';
+import { createRequire } from 'module';
+
+// Setup IndexedDB for Node.js environment
+if (typeof indexedDB === 'undefined') {
+  const require = createRequire(import.meta.url);
+  require('fake-indexeddb/auto');
+}
 
 // Load .env file if exists
 const envPath = resolve(process.cwd(), '.env');
@@ -127,6 +135,15 @@ writeFileSync(tempTsconfig, JSON.stringify(tsconfigContent, null, 2));
 const runnerScript = resolve(tempDir, 'runner.mjs');
 const runnerContent = `
 import { pathToFileURL } from 'url';
+import { createRequire } from 'module';
+
+// Setup IndexedDB for Node.js environment
+if (typeof indexedDB === 'undefined') {
+  try {
+    const require = createRequire('${resolve(sdkDistPath, 'agent.local.js')}');
+    require('fake-indexeddb/auto');
+  } catch {}
+}
 
 // Store context in globalThis for runner to access
 globalThis.__workflowContext = ${JSON.stringify(context)};
