@@ -6,6 +6,7 @@ import { sendImage } from './methods/local/send-image'
 import { sendText } from './methods/local/send-text'
 import { request } from './utils/request.local'
 import Dexie from 'dexie'
+import 'fake-indexeddb/auto' // Setup IndexedDB for Node.js environment
 import type {
   AgentOptions,
   BrowserContext,
