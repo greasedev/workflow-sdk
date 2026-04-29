@@ -1,4 +1,5 @@
 export { Agent } from './agent'
+export { Dexie } from 'dexie'
 export {
   ActionError,
   CompletionError,
