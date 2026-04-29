@@ -5,5 +5,5 @@ export { CallError } from './methods/call';
 export { SendTextError } from './methods/send-text';
 export { SendImageError } from './methods/send-image';
 export type { WorkflowRequestMessage, WorkflowResponse, } from './utils/request';
-export type { AgentOptions, BrowserContext, CallOptions, CallResult, CompleteOptions, CompleteResult, SendTextResult, SendImageResult, Tab, ToolCall, Visibility, WorkflowContext, } from './types';
+export type { AgentOptions, BrowserContext, CallOptions, CallResult, CompleteOptions, CompleteResult, SendTextResult, SendImageResult, Tab, ToolCall, Visibility, WorkflowContext, WorkflowResult, } from './types';
 //# sourceMappingURL=index.d.ts.map

@@ -26,4 +26,5 @@ export type {
   ToolCall,
   Visibility,
   WorkflowContext,
+  WorkflowResult,
 } from './types'

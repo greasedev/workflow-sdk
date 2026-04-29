@@ -181,4 +181,9 @@ export interface WorkflowContext {
     /** Key-value pairs for workflow parameters */
     params?: Record<string, unknown>;
 }
+export interface WorkflowResult {
+    success: boolean;
+    message: string;
+    error?: unknown;
+}
 //# sourceMappingURL=types.d.ts.map

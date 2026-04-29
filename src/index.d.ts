@@ -136,6 +136,12 @@ export interface WorkflowContext {
   params?: Record<string, unknown>
 }
 
+export interface WorkflowResult {
+  success: boolean;
+  message: string;
+  error?: unknown;
+}
+
 // ============================================================================
 // Request/Response Types
 // ============================================================================
