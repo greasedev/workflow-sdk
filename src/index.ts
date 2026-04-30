@@ -29,6 +29,7 @@ export type {
   ScheduleDelivery,
   ScheduleDefinition,
   SchedulePayload,
+  SchedulePayloadPatch,
   SchedulerJob,
   SchedulerPatch,
   SchedulerArgs,

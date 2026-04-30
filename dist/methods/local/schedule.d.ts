@@ -8,40 +8,42 @@ export declare class SchedulerError extends Error {
     constructor(message: string, statusCode?: number | undefined);
 }
 /**
- * Scheduler API for managing scheduled tasks (mock implementation for LOCAL mode).
- * Validates parameters and logs requests.
+ * Scheduler API for managing scheduled tasks (LOCAL mode with in-memory storage).
+ * Only `run()` and `runs()` are mocked - other operations have real implementations.
  */
 export declare class Scheduler {
     private readonly ctx;
     constructor(ctx: AgentContext);
     /**
-     * Get scheduler status (mock).
+     * Get scheduler status.
      */
     status(): Promise<SchedulerStatusResult>;
     /**
-     * List scheduled tasks (mock).
+     * List scheduled tasks for this agent.
      */
     list(includeDisabled?: boolean): Promise<SchedulerListResult>;
     /**
-     * Add a new scheduled task (mock).
+     * Add a new scheduled task.
      */
     add(job: SchedulerJob): Promise<SchedulerAddResult>;
     /**
-     * Update a scheduled task (mock).
+     * Update an existing scheduled task.
      */
     update(taskId: string, patch: SchedulerPatch): Promise<SchedulerUpdateResult>;
     /**
-     * Remove a scheduled task (mock).
+     * Remove a scheduled task.
      */
     remove(taskId: string): Promise<SchedulerRemoveResult>;
     /**
-     * Run a task immediately (mock).
+     * Run a task immediately (mock - logs only).
      */
     run(taskId: string): Promise<SchedulerRunResult>;
     /**
-     * Get run logs for a task (mock).
+     * Get run logs for a task (mock - returns empty array).
      */
     runs(taskId: string): Promise<SchedulerRunsResult>;
     private validateJob;
+    private extractPayloadInfo;
+    private calculateNextRunAtMs;
 }
 //# sourceMappingURL=schedule.d.ts.map

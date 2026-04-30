@@ -188,7 +188,7 @@ export interface WorkflowResult {
 }
 export type SchedulerAction = 'status' | 'list' | 'add' | 'update' | 'remove' | 'run' | 'runs';
 export type ScheduleKind = 'at' | 'every' | 'cron';
-export type PayloadKind = 'agentTurn' | 'chatInject';
+export type PayloadKind = 'agentTurn' | 'chatInject' | 'invokeWorkflow';
 export interface ScheduleDelivery {
     channel: string;
     to: string;
@@ -204,13 +204,34 @@ export interface ScheduleDefinition {
     expr?: string;
     tz?: string;
 }
-export interface SchedulePayload {
-    kind: PayloadKind;
+export type SchedulePayload = {
+    kind: 'agentTurn';
     message: string;
     model?: string;
-    chatId?: string;
     timeoutMs?: number;
-}
+} | {
+    kind: 'chatInject';
+    chatId: string;
+    message: string;
+} | {
+    kind: 'invokeWorkflow';
+    workflowName: string;
+    workflowParams?: Record<string, unknown>;
+};
+export type SchedulePayloadPatch = {
+    kind: 'agentTurn';
+    message?: string;
+    model?: string;
+    timeoutMs?: number;
+} | {
+    kind: 'chatInject';
+    chatId?: string;
+    message?: string;
+} | {
+    kind: 'invokeWorkflow';
+    workflowName?: string;
+    workflowParams?: Record<string, unknown>;
+};
 export interface SchedulerJob {
     name: string;
     description?: string;
@@ -229,7 +250,7 @@ export interface SchedulerPatch {
     deleteAfterRun?: boolean;
     timeoutMs?: number;
     schedule?: ScheduleDefinition;
-    payload?: Partial<SchedulePayload>;
+    payload?: SchedulePayloadPatch;
     delivery?: ScheduleDelivery | null;
 }
 export interface SchedulerArgs {
@@ -251,7 +272,7 @@ export interface SchedulerTaskInfo {
     };
     payload: {
         kind: string;
-        message: string;
+        message?: string;
     };
     delivery?: ScheduleDelivery;
     nextRunAtMs?: number;
