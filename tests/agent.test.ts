@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Agent } from '../src/agent'
 import {
-  ActionError,
   CompletionError,
   ConnectionError,
 } from '../src/errors'
 import { CallError } from '../src/methods/call'
+import { SchedulerError } from '../src/methods/schedule'
 
 // Mock chrome.runtime.sendMessage
 const mockSendMessage = vi.fn()
@@ -45,6 +45,7 @@ describe('Agent', () => {
     it('creates agent with no options', () => {
       const agent = new Agent({})
       expect(agent).toBeDefined()
+      expect(agent.agentId).toBeDefined()
     })
 
     it('creates agent with browser context', () => {
@@ -52,6 +53,7 @@ describe('Agent', () => {
         browserContext: { windowId: 123 },
       })
       expect(agent).toBeDefined()
+      expect(agent.browserContext?.windowId).toBe(123)
     })
 
     it('generates sessionId when stateful mode is enabled', () => {
@@ -63,149 +65,55 @@ describe('Agent', () => {
       const agent = new Agent({ stateful: false })
       expect(agent.sessionId).toBeNull()
     })
+
+    it('uses provided agentId', () => {
+      const agent = new Agent({ agentId: 'test-agent-123' })
+      expect(agent.agentId).toBe('test-agent-123')
+    })
+
+    it('generates agentId when not provided', () => {
+      const agent = new Agent({})
+      expect(agent.agentId).toMatch(/^[a-f0-9-]{36}$/) // UUID format
+    })
+
+    it('creates scheduler instance', () => {
+      const agent = new Agent({})
+      expect(agent.scheduler).toBeDefined()
+    })
   })
 
-  describe('act()', () => {
-    it('sends WORKFLOW_REQUEST message to background', async () => {
-      mockSendMessage.mockResolvedValue(mockResponse({ success: true, steps: [] }))
-
-      const agent = new Agent({})
-      await agent.act('click the button')
-
-      expect(mockSendMessage).toHaveBeenCalledWith({
-        type: 'WORKFLOW_REQUEST',
-        endpoint: '/sdk/act',
-        body: expect.objectContaining({
-          instruction: 'click the button',
-        }),
-      })
+  describe('getDb()', () => {
+    it('returns Dexie instance with agentId in name', () => {
+      const agent = new Agent({ agentId: 'test-agent' })
+      const db = agent.getDb()
+      expect(db.name).toBe('db-test-agent')
     })
 
-    it('includes context and maxSteps options', async () => {
-      mockSendMessage.mockResolvedValue(mockResponse({ success: true, steps: [] }))
+    it('returns same instance on multiple calls', () => {
+      const agent = new Agent({ agentId: 'test-agent' })
+      const db1 = agent.getDb()
+      const db2 = agent.getDb()
+      expect(db1).toBe(db2)
+    })
+  })
 
+  describe('getPageLink()', () => {
+    it('generates basic page link', () => {
       const agent = new Agent({})
-      await agent.act('search for item', {
-        context: { query: 'headphones' },
-        maxSteps: 5,
-      })
-
-      const call = mockSendMessage.mock.calls[0][0]
-      expect(call.body.instruction).toBe('search for item')
-      expect(call.body.context).toEqual({ query: 'headphones' })
-      expect(call.body.maxSteps).toBe(5)
+      const link = agent.getPageLink('index')
+      expect(link).toBe('<pageLink>index.html</pageLink>')
     })
 
-    it('includes browserContext from agent', async () => {
-      mockSendMessage.mockResolvedValue(mockResponse({ success: true, steps: [] }))
-
-      const agent = new Agent({
-        browserContext: { windowId: 123, enabledMcpServers: ['test'] },
-      })
-      await agent.act('click the button')
-
-      const call = mockSendMessage.mock.calls[0][0]
-      expect(call.body.browserContext).toEqual({
-        windowId: 123,
-        enabledMcpServers: ['test'],
-      })
+    it('generates page link with query params', () => {
+      const agent = new Agent({})
+      const link = agent.getPageLink('detail', { id: 123, tab: 'info' })
+      expect(link).toBe('<pageLink>detail.html?id=123&tab=info</pageLink>')
     })
 
-    it('includes sessionId in request', async () => {
-      mockSendMessage.mockResolvedValue(mockResponse({ success: true, steps: [] }))
-
+    it('generates page link with empty params', () => {
       const agent = new Agent({})
-      const sessionId = agent.sessionId
-      await agent.act('click the button')
-
-      const call = mockSendMessage.mock.calls[0][0]
-      expect(call.body.sessionId).toBe(sessionId)
-    })
-
-    it('returns ActResult on success', async () => {
-      mockSendMessage.mockResolvedValue(mockResponse({ success: true, steps: [] }))
-
-      const agent = new Agent({})
-      const result = await agent.act('click the button')
-
-      // After loop completes without verification, returns failure
-      // because the loop continues when success is true but exits with failure
-      expect(result.success).toBe(false)
-      expect(result.steps).toEqual([])
-    })
-
-    it('returns ActResult with steps', async () => {
-      const mockSteps = [
-        { thought: 'I need to click the button', toolCalls: [{ name: 'click', args: { x: 100, y: 200 } }] },
-      ]
-      mockSendMessage.mockResolvedValue(mockResponse({ success: true, steps: mockSteps }))
-
-      const agent = new Agent({})
-      const result = await agent.act('click the button')
-
-      expect(result.success).toBe(false)
-      expect(result.steps).toEqual(mockSteps)
-    })
-
-    it('throws ActionError on failure', async () => {
-      mockSendMessage.mockResolvedValue(mockErrorResponse('Action failed', 500))
-
-      const agent = new Agent({})
-
-      await expect(agent.act('click the button')).rejects.toThrow(ActionError)
-    })
-
-    it('throws ConnectionError when sendMessage throws', async () => {
-      mockSendMessage.mockRejectedValue(new Error('Network error'))
-
-      const agent = new Agent({})
-
-      await expect(agent.act('click the button')).rejects.toThrow(
-        ConnectionError,
-      )
-    })
-
-    it('resets sessionId when resetState is true', async () => {
-      mockSendMessage.mockResolvedValue(mockResponse({ success: true, steps: [] }))
-
-      const agent = new Agent({})
-      const originalSessionId = agent.sessionId
-
-      await agent.act('click the button', { resetState: true })
-
-      expect(agent.sessionId).not.toBe(originalSessionId)
-    })
-
-    it('does not reset sessionId when resetState is false', async () => {
-      mockSendMessage.mockResolvedValue(mockResponse({ success: true, steps: [] }))
-
-      const agent = new Agent({})
-      const originalSessionId = agent.sessionId
-
-      await agent.act('click the button', { resetState: false })
-
-      expect(agent.sessionId).toBe(originalSessionId)
-    })
-
-    it('returns failure immediately when action fails', async () => {
-      mockSendMessage.mockResolvedValue(mockResponse({ success: false, steps: [] }))
-
-      const agent = new Agent({})
-      const result = await agent.act('click the button')
-
-      expect(result.success).toBe(false)
-      expect(mockSendMessage).toHaveBeenCalledTimes(1)
-    })
-
-    it('executes all retries when maxRetries is set', async () => {
-      mockSendMessage.mockResolvedValue(mockResponse({ success: true, steps: [] }))
-
-      const agent = new Agent({})
-      const result = await agent.act('click the button', { maxRetries: 1 })
-
-      // Loop runs 2 times (initial + 1 retry) since success=true doesn't return early
-      expect(mockSendMessage).toHaveBeenCalledTimes(2)
-      expect(result.success).toBe(false) // Loop ends with failure
+      const link = agent.getPageLink('home', {})
+      expect(link).toBe('<pageLink>home.html</pageLink>')
     })
   })
 
@@ -375,46 +283,148 @@ describe('Agent', () => {
     })
   })
 
-  describe('error handling', () => {
-    it('includes status code in error', async () => {
-      mockSendMessage.mockResolvedValue(mockErrorResponse('Not found', 404))
+  describe('scheduler', () => {
+    it('scheduler.status() sends request', async () => {
+      mockSendMessage.mockResolvedValue({ ok: true, status: 200, data: { running: true, tasks: 0, nextWakeAtMs: null } })
 
       const agent = new Agent({})
+      const result = await agent.scheduler.status()
 
-      try {
-        await agent.act('click the button')
-      } catch (error) {
-        expect(error).toBeInstanceOf(ActionError)
-        expect((error as ActionError).statusCode).toBe(404)
-      }
+      expect(mockSendMessage).toHaveBeenCalledWith({
+        type: 'WORKFLOW_REQUEST',
+        endpoint: '/sdk/scheduler',
+        body: expect.objectContaining({
+          action: 'status',
+          agentId: agent.agentId,
+        }),
+      })
+      expect(result.running).toBe(true)
     })
 
-    it('extracts error message from response', async () => {
-      mockSendMessage.mockResolvedValue(mockErrorResponse('Custom error message', 400))
+    it('scheduler.list() sends request', async () => {
+      mockSendMessage.mockResolvedValue({ ok: true, status: 200, data: { count: 0, tasks: [] } })
 
       const agent = new Agent({})
+      const result = await agent.scheduler.list()
 
-      try {
-        await agent.act('click the button')
-      } catch (error) {
-        expect(error).toBeInstanceOf(ActionError)
-        expect((error as ActionError).message).toBe('Custom error message')
-      }
+      expect(mockSendMessage).toHaveBeenCalledWith({
+        type: 'WORKFLOW_REQUEST',
+        endpoint: '/sdk/scheduler',
+        body: expect.objectContaining({
+          action: 'list',
+          agentId: agent.agentId,
+        }),
+      })
+      expect(result.count).toBe(0)
     })
 
-    it('uses default error message when no error message', async () => {
-      mockSendMessage.mockResolvedValue({ ok: false, status: 500 })
+    it('scheduler.add() sends request', async () => {
+      mockSendMessage.mockResolvedValue({ ok: true, status: 200, data: { id: 'task-1', name: 'Test', enabled: true, nextRunAtMs: 123 } })
+
+      const agent = new Agent({})
+      const result = await agent.scheduler.add({
+        name: 'Test task',
+        schedule: { kind: 'at', at: '2026-05-01T09:00:00Z' },
+        payload: { kind: 'agentTurn', message: 'Hello' },
+      })
+
+      expect(mockSendMessage).toHaveBeenCalledWith({
+        type: 'WORKFLOW_REQUEST',
+        endpoint: '/sdk/scheduler',
+        body: expect.objectContaining({
+          action: 'add',
+          agentId: agent.agentId,
+          job: expect.objectContaining({
+            name: 'Test task',
+          }),
+        }),
+      })
+      expect(result.id).toBe('task-1')
+    })
+
+    it('scheduler.update() sends request', async () => {
+      mockSendMessage.mockResolvedValue({ ok: true, status: 200, data: { id: 'task-1', name: 'Updated', enabled: false, nextRunAtMs: 123 } })
+
+      const agent = new Agent({})
+      const result = await agent.scheduler.update('task-1', { enabled: false })
+
+      expect(mockSendMessage).toHaveBeenCalledWith({
+        type: 'WORKFLOW_REQUEST',
+        endpoint: '/sdk/scheduler',
+        body: expect.objectContaining({
+          action: 'update',
+          taskId: 'task-1',
+          patch: { enabled: false },
+          agentId: agent.agentId,
+        }),
+      })
+      expect(result.enabled).toBe(false)
+    })
+
+    it('scheduler.remove() sends request', async () => {
+      mockSendMessage.mockResolvedValue({ ok: true, status: 200, data: { ok: true, removed: true } })
+
+      const agent = new Agent({})
+      const result = await agent.scheduler.remove('task-1')
+
+      expect(mockSendMessage).toHaveBeenCalledWith({
+        type: 'WORKFLOW_REQUEST',
+        endpoint: '/sdk/scheduler',
+        body: expect.objectContaining({
+          action: 'remove',
+          taskId: 'task-1',
+          agentId: agent.agentId,
+        }),
+      })
+      expect(result.removed).toBe(true)
+    })
+
+    it('scheduler.run() sends request', async () => {
+      mockSendMessage.mockResolvedValue({ ok: true, status: 200, data: { ok: true, ran: true } })
+
+      const agent = new Agent({})
+      const result = await agent.scheduler.run('task-1')
+
+      expect(mockSendMessage).toHaveBeenCalledWith({
+        type: 'WORKFLOW_REQUEST',
+        endpoint: '/sdk/scheduler',
+        body: expect.objectContaining({
+          action: 'run',
+          taskId: 'task-1',
+          agentId: agent.agentId,
+        }),
+      })
+      expect(result.ran).toBe(true)
+    })
+
+    it('scheduler.runs() sends request', async () => {
+      mockSendMessage.mockResolvedValue({ ok: true, status: 200, data: { taskId: 'task-1', runs: [] } })
+
+      const agent = new Agent({})
+      const result = await agent.scheduler.runs('task-1')
+
+      expect(mockSendMessage).toHaveBeenCalledWith({
+        type: 'WORKFLOW_REQUEST',
+        endpoint: '/sdk/scheduler',
+        body: expect.objectContaining({
+          action: 'runs',
+          taskId: 'task-1',
+          agentId: agent.agentId,
+        }),
+      })
+      expect(result.runs).toEqual([])
+    })
+
+    it('scheduler throws SchedulerError on failure', async () => {
+      mockSendMessage.mockResolvedValue({ ok: false, status: 400, error: { message: 'Invalid job' } })
 
       const agent = new Agent({})
 
-      try {
-        await agent.act('click the button')
-      } catch (error) {
-        expect(error).toBeInstanceOf(ActionError)
-        expect((error as ActionError).message).toBe(
-          'Request failed with status 500',
-        )
-      }
+      await expect(agent.scheduler.add({
+        name: '',
+        schedule: { kind: 'at' },
+        payload: { kind: 'agentTurn', message: '' },
+      })).rejects.toThrow(SchedulerError)
     })
   })
 
@@ -477,6 +487,45 @@ describe('Agent', () => {
       const agent = new Agent({ signal: controller.signal })
 
       expect(() => agent.throwIfAborted()).not.toThrow()
+    })
+  })
+
+  describe('sendText()', () => {
+    it('sends WORKFLOW_REQUEST message to background', async () => {
+      mockSendMessage.mockResolvedValue({ ok: true, status: 200, data: { success: true } })
+
+      const agent = new Agent({ agentId: 'test-agent' })
+      await agent.sendText('chat-123', 'Title', 'Hello')
+
+      expect(mockSendMessage).toHaveBeenCalledWith({
+        type: 'WORKFLOW_REQUEST',
+        endpoint: '/sdk/send_text',
+        body: expect.objectContaining({
+          chatId: 'chat-123',
+          title: 'Title',
+          content: 'Hello',
+          agentId: 'test-agent',
+        }),
+      })
+    })
+  })
+
+  describe('sendImage()', () => {
+    it('sends WORKFLOW_REQUEST message to background', async () => {
+      mockSendMessage.mockResolvedValue({ ok: true, status: 200, data: { success: true } })
+
+      const agent = new Agent({ agentId: 'test-agent' })
+      await agent.sendImage('chat-123', 'data:image/png;base64,abc')
+
+      expect(mockSendMessage).toHaveBeenCalledWith({
+        type: 'WORKFLOW_REQUEST',
+        endpoint: '/sdk/send_image',
+        body: expect.objectContaining({
+          chatId: 'chat-123',
+          base64Image: 'data:image/png;base64,abc',
+          agentId: 'test-agent',
+        }),
+      })
     })
   })
 })
