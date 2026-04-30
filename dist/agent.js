@@ -1,6 +1,7 @@
 import { WorkflowSDKError } from './errors';
 import { call } from './methods/call';
 import { complete } from './methods/complete';
+import { Scheduler } from './methods/schedule';
 import { sendImage } from './methods/send-image';
 import { sendText } from './methods/send-text';
 import { request } from './utils/request';
@@ -38,6 +39,7 @@ export class Agent {
     signal;
     browserContext;
     stateful;
+    scheduler;
     _sessionId = null;
     _disposed = false;
     _db = null;
@@ -46,6 +48,7 @@ export class Agent {
         this.signal = options.signal;
         this.browserContext = options.browserContext;
         this.stateful = options.stateful ?? true;
+        this.scheduler = new Scheduler(this);
         if (this.stateful) {
             this._sessionId = crypto.randomUUID();
         }

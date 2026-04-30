@@ -225,3 +225,137 @@ export interface WorkflowResult {
   message: string;
   error?: unknown;
 }
+
+// ============================================================================
+// Scheduler Types
+// ============================================================================
+
+export type SchedulerAction = 'status' | 'list' | 'add' | 'update' | 'remove' | 'run' | 'runs'
+
+export type ScheduleKind = 'at' | 'every' | 'cron'
+
+export type PayloadKind = 'agentTurn' | 'chatInject'
+
+export interface ScheduleDelivery {
+  channel: string
+  to: string
+  bestEffort?: boolean
+}
+
+export interface ScheduleDefinition {
+  kind: ScheduleKind
+  at?: string
+  atMs?: number
+  everyMs?: number
+  anchor?: string
+  anchorMs?: number
+  expr?: string
+  tz?: string
+}
+
+export interface SchedulePayload {
+  kind: PayloadKind
+  message: string
+  model?: string
+  chatId?: string
+  timeoutMs?: number
+}
+
+export interface SchedulerJob {
+  name: string
+  description?: string
+  enabled?: boolean
+  deleteAfterRun?: boolean
+  timeoutMs?: number
+  agentId?: string
+  schedule: ScheduleDefinition
+  payload: SchedulePayload
+  delivery?: ScheduleDelivery
+}
+
+export interface SchedulerPatch {
+  name?: string
+  description?: string
+  enabled?: boolean
+  deleteAfterRun?: boolean
+  timeoutMs?: number
+  schedule?: ScheduleDefinition
+  payload?: Partial<SchedulePayload>
+  delivery?: ScheduleDelivery | null
+}
+
+export interface SchedulerArgs {
+  action: SchedulerAction
+  includeDisabled?: boolean
+  agentId?: string
+  job?: SchedulerJob
+  taskId?: string
+  patch?: SchedulerPatch
+}
+
+export interface SchedulerTaskInfo {
+  id: string
+  name: string
+  description?: string
+  enabled: boolean
+  agentId?: string
+  schedule: { kind: string }
+  payload: { kind: string; message: string }
+  delivery?: ScheduleDelivery
+  nextRunAtMs?: number
+  lastStatus?: string
+  lastRunAtMs?: number
+  lastError?: string
+}
+
+export interface SchedulerStatusResult {
+  running: boolean
+  tasks: number
+  nextWakeAtMs: number | null
+}
+
+export interface SchedulerListResult {
+  count: number
+  tasks: SchedulerTaskInfo[]
+}
+
+export interface SchedulerAddResult {
+  id: string
+  name: string
+  enabled: boolean
+  agentId?: string
+  nextRunAtMs?: number
+}
+
+export interface SchedulerUpdateResult {
+  id: string
+  name: string
+  enabled: boolean
+  nextRunAtMs?: number
+}
+
+export interface SchedulerRemoveResult {
+  ok: boolean
+  removed: boolean
+}
+
+export interface SchedulerRunResult {
+  ok: boolean
+  ran: boolean
+  reason?: string
+}
+
+export interface SchedulerRunLog {
+  id: string
+  taskId: string
+  timestamp: number
+  status: 'ok' | 'error' | 'skipped'
+  error?: string
+  durationMs?: number
+  chatId?: string
+}
+
+export interface SchedulerRunsResult {
+  taskId: string
+  runs: SchedulerRunLog[]
+}

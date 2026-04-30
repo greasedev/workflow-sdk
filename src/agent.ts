@@ -2,6 +2,7 @@ import type { AgentContext } from './context'
 import { WorkflowSDKError } from './errors'
 import { call } from './methods/call'
 import { complete } from './methods/complete'
+import { Scheduler } from './methods/schedule'
 import { sendImage } from './methods/send-image'
 import { sendText } from './methods/send-text'
 import { request } from './utils/request'
@@ -52,6 +53,7 @@ export class Agent implements AsyncDisposable, AgentContext {
   readonly signal?: AbortSignal
   readonly browserContext?: BrowserContext
   readonly stateful: boolean
+  readonly scheduler: Scheduler
 
   private _sessionId: string | null = null
   private _disposed = false
@@ -62,6 +64,7 @@ export class Agent implements AsyncDisposable, AgentContext {
     this.signal = options.signal
     this.browserContext = options.browserContext
     this.stateful = options.stateful ?? true
+    this.scheduler = new Scheduler(this)
 
     if (this.stateful) {
       this._sessionId = crypto.randomUUID()

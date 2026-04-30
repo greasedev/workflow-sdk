@@ -2,10 +2,12 @@ import type { AgentContext } from './context'
 import { WorkflowSDKError } from './errors'
 import { call } from './methods/local/call'
 import { complete } from './methods/local/complete'
+import { Scheduler } from './methods/local/schedule'
 import { sendImage } from './methods/local/send-image'
 import { sendText } from './methods/local/send-text'
 import { request } from './utils/request.local'
 import Dexie from 'dexie'
+import { createRequire } from 'module'
 import type {
   AgentOptions,
   BrowserContext,
@@ -17,6 +19,16 @@ import type {
   SendTextResult,
   Visibility,
 } from './types'
+
+// Setup IndexedDB for Node.js environment using require (resolves from SDK directory)
+if (typeof indexedDB === 'undefined') {
+  try {
+    const require = createRequire(import.meta.url)
+    require('fake-indexeddb/auto')
+  } catch {
+    // fake-indexeddb not available - getDb() will fail in Node.js
+  }
+}
 
 /**
  * Internal error class for dispose operations
@@ -52,6 +64,7 @@ export class Agent implements AsyncDisposable, AgentContext {
   readonly signal?: AbortSignal
   readonly browserContext?: BrowserContext
   readonly stateful: boolean
+  readonly scheduler: Scheduler
 
   private _sessionId: string | null = null
   private _disposed = false
@@ -62,6 +75,7 @@ export class Agent implements AsyncDisposable, AgentContext {
     this.signal = options.signal
     this.browserContext = options.browserContext
     this.stateful = options.stateful ?? true
+    this.scheduler = new Scheduler(this)
 
     if (this.stateful) {
       this._sessionId = crypto.randomUUID()

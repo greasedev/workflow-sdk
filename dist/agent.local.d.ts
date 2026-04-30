@@ -1,4 +1,5 @@
 import type { AgentContext } from './context';
+import { Scheduler } from './methods/local/schedule';
 import Dexie from 'dexie';
 import type { AgentOptions, BrowserContext, CallOptions, CallResult, CompleteOptions, CompleteResult, SendImageResult, SendTextResult, Visibility } from './types';
 /**
@@ -25,6 +26,7 @@ export declare class Agent implements AsyncDisposable, AgentContext {
     readonly signal?: AbortSignal;
     readonly browserContext?: BrowserContext;
     readonly stateful: boolean;
+    readonly scheduler: Scheduler;
     private _sessionId;
     private _disposed;
     private _db;
