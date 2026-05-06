@@ -71,7 +71,7 @@ export class Agent implements AsyncDisposable, AgentContext {
   private _db: Dexie | null = null
 
   constructor(options: AgentOptions) {
-    this.agentId = options.agentId ?? process.env.AGENT_ID ?? crypto.randomUUID()
+    this.agentId = options.agentId ?? process.env.AGENT_ID ?? "default-agent-id"
     this.signal = options.signal
     this.browserContext = options.browserContext
     this.stateful = options.stateful ?? true

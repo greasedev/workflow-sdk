@@ -44,7 +44,7 @@ export class Agent {
     _disposed = false;
     _db = null;
     constructor(options) {
-        this.agentId = options.agentId ?? crypto.randomUUID();
+        this.agentId = options.agentId ?? "default-agent-id";
         this.signal = options.signal;
         this.browserContext = options.browserContext;
         this.stateful = options.stateful ?? true;
