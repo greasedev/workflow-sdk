@@ -15,7 +15,7 @@ export async function complete(
     {
       prompt,
       system: options?.system,
-      context: options?.context,
+      jsonSchema: options?.jsonSchema,
     },
     CompletionError,
   )

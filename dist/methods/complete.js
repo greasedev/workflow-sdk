@@ -4,7 +4,7 @@ export async function complete(ctx, prompt, options) {
     const result = await request(ctx, '/sdk/complete', {
         prompt,
         system: options?.system,
-        context: options?.context,
+        jsonSchema: options?.jsonSchema,
     }, CompletionError);
     return result;
 }

@@ -73,11 +73,25 @@ export declare class Agent implements AsyncDisposable, AgentContext {
      *
      * @param prompt - The prompt to send to the LLM
      * @param options - Optional completion settings
-     * @returns Promise resolving to `{ text: string }`
+     * @returns Promise resolving to `{ text?: string, json?: unknown }`
      *
      * @example
      * ```typescript
+     * // Text completion
      * const { text } = await agent.complete('Summarize the current page')
+     *
+     * // Structured output with JSON Schema
+     * const { json } = await agent.complete('Extract user info', {
+     *   system: 'You are a data extractor',
+     *   jsonSchema: {
+     *     type: 'object',
+     *     properties: {
+     *       name: { type: 'string' },
+     *       email: { type: 'string', format: 'email' }
+     *     },
+     *     required: ['name', 'email']
+     *   }
+     * })
      * ```
      */
     complete(prompt: string, options?: CompleteOptions): Promise<CompleteResult>;

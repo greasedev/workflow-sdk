@@ -1,5 +1,6 @@
-import { generateText } from 'ai';
+import { generateObject, generateText } from 'ai';
 import { createOpenAI, openai } from '@ai-sdk/openai';
+import { z } from 'zod';
 /**
  * Default model for LOCAL mode completions
  */
@@ -21,6 +22,18 @@ export async function complete(ctx, prompt, options) {
     const client = baseUrl
         ? createOpenAI({ baseURL: baseUrl })
         : openai;
+    if (options?.jsonSchema) {
+        // Use generateObject for structured output
+        const result = await generateObject({
+            model: client.chat(model),
+            prompt,
+            system: options?.system,
+            schema: jsonSchemaToZod(options.jsonSchema),
+        });
+        return {
+            json: result.object,
+        };
+    }
     const result = await generateText({
         model: client.chat(model),
         prompt,
@@ -29,4 +42,60 @@ export async function complete(ctx, prompt, options) {
     return {
         text: result.text,
     };
+}
+/**
+ * Convert JsonSchema to Zod schema.
+ */
+function jsonSchemaToZod(schema) {
+    if (!schema)
+        return z.object({});
+    switch (schema.type) {
+        case 'string':
+            if (schema.enum) {
+                return z.enum(schema.enum);
+            }
+            let stringSchema = z.string();
+            if (schema.minLength)
+                stringSchema = stringSchema.min(schema.minLength);
+            if (schema.maxLength)
+                stringSchema = stringSchema.max(schema.maxLength);
+            if (schema.pattern)
+                stringSchema = stringSchema.regex(new RegExp(schema.pattern));
+            return stringSchema;
+        case 'number':
+        case 'integer':
+            let numberSchema = schema.type === 'integer' ? z.number().int() : z.number();
+            if (schema.minimum)
+                numberSchema = numberSchema.min(schema.minimum);
+            if (schema.maximum)
+                numberSchema = numberSchema.max(schema.maximum);
+            return numberSchema;
+        case 'boolean':
+            return z.boolean();
+        case 'array':
+            return z.array(jsonSchemaToZod(schema.items));
+        case 'object':
+            if (!schema.properties)
+                return z.object({});
+            const properties = {};
+            for (const [key, value] of Object.entries(schema.properties)) {
+                properties[key] = jsonSchemaToZod(value);
+            }
+            let objectSchema = z.object(properties);
+            // Make non-required properties optional
+            if (schema.required) {
+                const required = new Set(schema.required);
+                for (const key of Object.keys(properties)) {
+                    if (!required.has(key)) {
+                        properties[key] = properties[key].optional();
+                    }
+                }
+                objectSchema = z.object(properties);
+            }
+            return objectSchema;
+        case 'null':
+            return z.null();
+        default:
+            return z.object({});
+    }
 }

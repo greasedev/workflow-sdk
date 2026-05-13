@@ -1,5 +1,27 @@
 import type { ZodSchema } from 'zod';
 /**
+ * JSON Schema type definition.
+ * Follows JSON Schema Draft 2020-12 specification.
+ */
+export interface JsonSchema {
+    type?: 'object' | 'string' | 'number' | 'integer' | 'boolean' | 'array' | 'null';
+    properties?: Record<string, JsonSchema>;
+    required?: string[];
+    description?: string;
+    enum?: unknown[];
+    minimum?: number;
+    maximum?: number;
+    minLength?: number;
+    maxLength?: number;
+    pattern?: string;
+    format?: string;
+    items?: JsonSchema;
+    additionalProperties?: boolean | JsonSchema;
+    default?: unknown;
+    examples?: unknown[];
+    [key: string]: unknown;
+}
+/**
  * Tab information
  */
 export interface Tab {
@@ -118,15 +140,17 @@ export interface VerifyResult {
 export interface CompleteOptions {
     /** System prompt to guide the model's behavior */
     system?: string;
-    /** Optional key-value pairs for additional context */
-    context?: Record<string, unknown>;
+    /** Optional JSON Schema for structured output. When provided, returns json instead of text. */
+    jsonSchema?: JsonSchema;
 }
 /**
  * Result returned by `complete()`.
  */
 export interface CompleteResult {
-    /** The generated text response */
-    text: string;
+    /** The generated text response (when no jsonSchema provided) */
+    text?: string;
+    /** The structured JSON response (when jsonSchema provided) */
+    json?: Record<string, unknown>;
 }
 /**
  * Options for the `call()` method.
