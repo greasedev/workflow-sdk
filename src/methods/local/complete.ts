@@ -1,6 +1,6 @@
 import type { AgentContext } from '../../context'
 import type { CompleteOptions, CompleteResult, JsonSchema } from '../../types'
-import { completeSimple, getModel, Type } from '@mariozechner/pi-ai'
+import { completeSimple, getModel, Type, registerBuiltInApiProviders } from '@mariozechner/pi-ai'
 import type { Tool, Model, Api } from '@mariozechner/pi-ai'
 
 /**
@@ -65,14 +65,30 @@ export async function complete(
 ): Promise<CompleteResult> {
   ctx.throwIfAborted()
 
+  // Ensure API providers are registered
+  registerBuiltInApiProviders()
+
   const modelId = process.env.LOCAL_MODEL ?? DEFAULT_MODEL
   const apiKey = process.env.OPENAI_API_KEY
   const baseUrl = process.env.OPENAI_BASE_URL
 
-  // Get base model from registry and override baseUrl if needed
-  // Cast modelId to bypass strict typing - allows custom model names via LOCAL_MODEL env
-  const baseModel = getModel('openai', modelId as never) as Model<Api>
-  const model = baseUrl ? { ...baseModel, baseUrl } : baseModel
+  // Try to get model from registry, or create a basic model config if not found
+  const baseModel = getModel('openai', modelId as never) as Model<Api> | undefined
+
+  const model: Model<Api> = baseModel
+    ? (baseUrl ? { ...baseModel, baseUrl } : baseModel)
+    : {
+        id: modelId,
+        name: modelId,
+        api: 'openai-completions' as Api,
+        provider: 'openai',
+        baseUrl: baseUrl ?? 'https://api.openai.com/v1',
+        reasoning: false,
+        input: ['text'] as ('text' | 'image')[],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 128000,
+        maxTokens: 16384,
+      }
 
   const tools = options?.jsonSchema ? [createStructuredOutputTool(options.jsonSchema)] : undefined
 

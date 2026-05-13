@@ -1,4 +1,4 @@
-import { completeSimple, getModel, Type } from '@mariozechner/pi-ai';
+import { completeSimple, getModel, Type, registerBuiltInApiProviders } from '@mariozechner/pi-ai';
 /**
  * Default model for LOCAL mode completions
  */
@@ -42,13 +42,27 @@ function processCompleteResult(result, jsonSchema) {
  */
 export async function complete(ctx, prompt, options) {
     ctx.throwIfAborted();
+    // Ensure API providers are registered
+    registerBuiltInApiProviders();
     const modelId = process.env.LOCAL_MODEL ?? DEFAULT_MODEL;
     const apiKey = process.env.OPENAI_API_KEY;
     const baseUrl = process.env.OPENAI_BASE_URL;
-    // Get base model from registry and override baseUrl if needed
-    // Cast modelId to bypass strict typing - allows custom model names via LOCAL_MODEL env
+    // Try to get model from registry, or create a basic model config if not found
     const baseModel = getModel('openai', modelId);
-    const model = baseUrl ? { ...baseModel, baseUrl } : baseModel;
+    const model = baseModel
+        ? (baseUrl ? { ...baseModel, baseUrl } : baseModel)
+        : {
+            id: modelId,
+            name: modelId,
+            api: 'openai-completions',
+            provider: 'openai',
+            baseUrl: baseUrl ?? 'https://api.openai.com/v1',
+            reasoning: false,
+            input: ['text'],
+            cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+            contextWindow: 128000,
+            maxTokens: 16384,
+        };
     const tools = options?.jsonSchema ? [createStructuredOutputTool(options.jsonSchema)] : undefined;
     const result = await completeSimple(model, {
         systemPrompt: options?.system,
