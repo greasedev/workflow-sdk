@@ -1,8 +1,7 @@
 import type { AgentContext } from '../../context'
-import type { CompleteOptions, CompleteResult } from '../../types'
-import { generateText, Output } from 'ai'
-import { createOpenAI, openai } from '@ai-sdk/openai'
-import { z } from 'zod'
+import type { CompleteOptions, CompleteResult, JsonSchema } from '../../types'
+import { completeSimple, getModel, Type } from '@mariozechner/pi-ai'
+import type { Tool, Model, Api } from '@mariozechner/pi-ai'
 
 /**
  * Default model for LOCAL mode completions
@@ -10,11 +9,53 @@ import { z } from 'zod'
 const DEFAULT_MODEL = 'gpt-4o-mini'
 
 /**
- * Generate a text completion using Vercel AI SDK.
+ * Create the structured output tool for JSON schema responses.
+ */
+function createStructuredOutputTool(jsonSchema: JsonSchema): Tool {
+  const schema = Type.Unsafe(jsonSchema)
+
+  return {
+    name: 'output_structured',
+    description:
+      'Output structured data. Call this tool to return the final result instead of plain text.',
+    parameters: schema,
+  }
+}
+
+/**
+ * Process the result from completeSimple and return appropriate response.
+ */
+function processCompleteResult(
+  result: { content: Array<{ type: string; text?: string; name?: string; arguments?: Record<string, unknown> }> },
+  jsonSchema?: JsonSchema,
+): CompleteResult {
+  // If jsonSchema was provided, look for structured output tool call
+  if (jsonSchema) {
+    const toolCall = result.content.find(
+      (c): c is { type: 'toolCall'; name: string; arguments: Record<string, unknown> } =>
+        c.type === 'toolCall' && c.name === 'output_structured',
+    )
+
+    if (toolCall) {
+      return { json: toolCall.arguments }
+    }
+  }
+
+  // Standard text output
+  const text = result.content
+    .filter((c): c is { type: 'text'; text: string } => c.type === 'text')
+    .map(c => c.text)
+    .join('')
+
+  return { text }
+}
+
+/**
+ * Generate a text completion using pi-ai.
  *
  * Environment variables:
  * - OPENAI_API_KEY: Required for OpenAI provider
- * - OPENAI_BASE_URL: Optional, for custom API endpoint (e.g., Ollama, vLLM, DashScope)
+ * - OPENAI_BASE_URL: Optional, for custom API endpoint
  * - LOCAL_MODEL: Optional, defaults to 'gpt-4o-mini'
  */
 export async function complete(
@@ -24,93 +65,26 @@ export async function complete(
 ): Promise<CompleteResult> {
   ctx.throwIfAborted()
 
-  const model = process.env.LOCAL_MODEL ?? DEFAULT_MODEL
+  const modelId = process.env.LOCAL_MODEL ?? DEFAULT_MODEL
+  const apiKey = process.env.OPENAI_API_KEY
   const baseUrl = process.env.OPENAI_BASE_URL
 
-  // Use chat completions API for better compatibility with OpenAI-compatible endpoints
-  // (DashScope, Ollama, vLLM, etc.)
-  const client = baseUrl
-    ? createOpenAI({ baseURL: baseUrl })
-    : openai
+  // Get base model from registry and override baseUrl if needed
+  // Cast modelId to bypass strict typing - allows custom model names via LOCAL_MODEL env
+  const baseModel = getModel('openai', modelId as never) as Model<Api>
+  const model = baseUrl ? { ...baseModel, baseUrl } : baseModel
 
-  if (options?.jsonSchema) {
-    // Use generateText with Output.object for structured output
-    const result = await generateText({
-      model: client.chat(model),
-      prompt,
-      system: options?.system,
-      output: Output.object({ schema: jsonSchemaToZod(options.jsonSchema) }),
-    })
+  const tools = options?.jsonSchema ? [createStructuredOutputTool(options.jsonSchema)] : undefined
 
-    return {
-      json: result.output as Record<string, unknown>,
-    }
-  }
+  const result = await completeSimple(
+    model,
+    {
+      systemPrompt: options?.system,
+      messages: [{ role: 'user', content: prompt, timestamp: Date.now() }],
+      tools,
+    },
+    apiKey ? { apiKey, maxTokens: 2000 } : { maxTokens: 2000 },
+  )
 
-  const result = await generateText({
-    model: client.chat(model),
-    prompt,
-    system: options?.system,
-  })
-
-  return {
-    text: result.text,
-  }
-}
-
-/**
- * Convert JsonSchema to Zod schema.
- */
-function jsonSchemaToZod(schema: CompleteOptions['jsonSchema']): z.ZodTypeAny {
-  if (!schema) return z.object({})
-
-  switch (schema.type) {
-    case 'string':
-      if (schema.enum) {
-        return z.enum(schema.enum as [string, ...string[]])
-      }
-      let stringSchema = z.string()
-      if (schema.minLength) stringSchema = stringSchema.min(schema.minLength)
-      if (schema.maxLength) stringSchema = stringSchema.max(schema.maxLength)
-      if (schema.pattern) stringSchema = stringSchema.regex(new RegExp(schema.pattern))
-      return stringSchema
-
-    case 'number':
-    case 'integer':
-      let numberSchema = schema.type === 'integer' ? z.number().int() : z.number()
-      if (schema.minimum) numberSchema = numberSchema.min(schema.minimum)
-      if (schema.maximum) numberSchema = numberSchema.max(schema.maximum)
-      return numberSchema
-
-    case 'boolean':
-      return z.boolean()
-
-    case 'array':
-      return z.array(jsonSchemaToZod(schema.items))
-
-    case 'object':
-      if (!schema.properties) return z.object({})
-      const properties: Record<string, z.ZodTypeAny> = {}
-      for (const [key, value] of Object.entries(schema.properties)) {
-        properties[key] = jsonSchemaToZod(value)
-      }
-      let objectSchema = z.object(properties)
-      // Make non-required properties optional
-      if (schema.required) {
-        const required = new Set(schema.required)
-        for (const key of Object.keys(properties)) {
-          if (!required.has(key)) {
-            properties[key] = properties[key].optional()
-          }
-        }
-        objectSchema = z.object(properties)
-      }
-      return objectSchema
-
-    case 'null':
-      return z.null()
-
-    default:
-      return z.object({})
-  }
+  return processCompleteResult(result, options?.jsonSchema)
 }

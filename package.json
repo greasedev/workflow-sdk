@@ -47,8 +47,9 @@
     "src/index.d.ts"
   ],
   "dependencies": {
-    "@ai-sdk/openai": "^3.0.51",
-    "ai": "^6.0.149",
+    "@mariozechner/pi-agent-core": "0.53.0",
+    "@mariozechner/pi-ai": "0.53.0",
+    "@sinclair/typebox": "^0.34.49",
     "dexie": "^4.4.2",
     "fake-indexeddb": "^6.2.5",
     "json5": "^2.2.3",
