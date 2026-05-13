@@ -1,4 +1,4 @@
-import { generateObject, generateText } from 'ai';
+import { generateText, Output } from 'ai';
 import { createOpenAI, openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 /**
@@ -23,15 +23,15 @@ export async function complete(ctx, prompt, options) {
         ? createOpenAI({ baseURL: baseUrl })
         : openai;
     if (options?.jsonSchema) {
-        // Use generateObject for structured output
-        const result = await generateObject({
+        // Use generateText with Output.object for structured output
+        const result = await generateText({
             model: client.chat(model),
             prompt,
             system: options?.system,
-            schema: jsonSchemaToZod(options.jsonSchema),
+            output: Output.object({ schema: jsonSchemaToZod(options.jsonSchema) }),
         });
         return {
-            json: result.object,
+            json: result.output,
         };
     }
     const result = await generateText({
