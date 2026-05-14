@@ -1,6 +1,6 @@
 {
   "name": "@greaseclaw/workflow-sdk",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Browser automation SDK for GreaseClaw workflows - navigate, interact, extract data with natural language",
   "type": "module",
   "license": "AGPL-3.0-or-later",
