@@ -64,10 +64,12 @@ export async function complete(ctx, prompt, options) {
             maxTokens: 16384,
         };
     const tools = options?.jsonSchema ? [createStructuredOutputTool(options.jsonSchema)] : undefined;
+    // Handle thinking option: false explicitly disables thinking, undefined/true uses default behavior
+    const reasoning = options?.thinking === false ? undefined : (options?.thinking === true ? 'medium' : undefined);
     const result = await completeSimple(model, {
         systemPrompt: options?.system,
         messages: [{ role: 'user', content: prompt, timestamp: Date.now() }],
         tools,
-    }, apiKey ? { apiKey, maxTokens: 2000 } : { maxTokens: 2000 });
+    }, apiKey ? { apiKey, maxTokens: 2000, reasoning } : { maxTokens: 2000, reasoning });
     return processCompleteResult(result, options?.jsonSchema);
 }

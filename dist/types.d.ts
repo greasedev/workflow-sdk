@@ -142,6 +142,8 @@ export interface CompleteOptions {
     system?: string;
     /** Optional JSON Schema for structured output. When provided, returns json instead of text. */
     jsonSchema?: JsonSchema;
+    /** Enable or disable thinking/reasoning. Set to false to disable thinking. Default: true for reasoning-capable models. */
+    thinking?: boolean;
 }
 /**
  * Result returned by `complete()`.
