@@ -21,6 +21,7 @@ export type {
   CallResult,
   CompleteOptions,
   CompleteResult,
+  JsonSchema,
   SendTextResult,
   SendImageResult,
   SchedulerAction,
